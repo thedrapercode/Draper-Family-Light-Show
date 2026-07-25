@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const shows = await getCollection('shows');
+  return shows.map((show) => ({
+    params: { slug: show.slug },
+    props: { show },
+  }));
+}
+
+const { show } = Astro.props;
+const { Content } = await show.render();
+---
+<Layout title={show.data.title} description={show.data.tagline}>
+  <section class="text-white py-16" style={`background-color:${show.data.accent}`}>
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <p class="uppercase tracking-widest text-sm font-semibold mb-2 opacity-90">{show.data.months} &middot; {show.data.hours}</p>
+      <h1 class="text-4xl md:text-5xl font-extrabold mb-4">{show.data.title}</h1>
+      <p class="text-lg opacity-95 max-w-2xl mx-auto">{show.data.tagline}</p>
+    </div>
+  </section>
+
+  <article class="max-w-3xl mx-auto px-4 py-12 prose prose-slate">
+    <Content />
+  </article>
+
+  {show.data.charity && (
+    <section class="bg-slate-100 py-10">
+      <div class="max-w-3xl mx-auto px-4 text-center">
+        <p class="text-slate-700 mb-4">Proud to support <strong>{show.data.charity}</strong>.</p>
+        {show.data.charityUrl && (
+          <a href={show.data.charityUrl} target="_blank" rel="noopener noreferrer" class="inline-block bg-midnight text-white font-semibold px-6 py-3 rounded-full hover:bg-midnightdark transition">Donate Now</a>
+        )}
+      </div>
+    </section>
+  )}
+
+  <section class="max-w-3xl mx-auto px-4 py-12 text-center">
+    <a href="/event-schedule" class="inline-block border border-midnight text-midnight font-semibold px-6 py-3 rounded-full hover:bg-midnight hover:text-white transition">See Upcoming Dates</a>
+  </section>
+</Layout>

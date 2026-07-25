@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const charities = [
+  {
+    name: 'United Way of Hardin County',
+    blurb: 'United Way is a network of local organizations addressing health, education, and financial stability. 98% of donations stay in Hardin County.',
+    url: 'https://secure.givelively.org/donate/united-way-of-hardin-county-ohio-inc/draper-family-light-show',
+  },
+  {
+    name: "St. Jude Children's Research Hospital",
+    blurb: 'Every show, we also raise money for St. Jude, helping kids and families never receive a bill for treatment, travel, housing, or food.',
+    url: 'http://fundraising.stjude.org/goto/DraperLightShow',
+  },
+];
+---
+<Layout title="Donate" description="Support the charities behind the Draper Family Light Show.">
+  <section class="max-w-3xl mx-auto px-4 py-16 text-center">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-midnight mb-4">Help Our Cause</h1>
+    <p class="text-slate-600 mb-12">
+      Every Draper Family Light Show is completely free. If you're able, please consider supporting one of the
+      charities we raise money for each season.
+    </p>
+
+    <div class="grid sm:grid-cols-2 gap-6 text-left">
+      {charities.map((c) => (
+        <div class="bg-white rounded-xl shadow p-6 flex flex-col">
+          <h2 class="font-bold text-lg text-midnight mb-2">{c.name}</h2>
+          <p class="text-sm text-slate-600 flex-1 mb-4">{c.blurb}</p>
+          <a href={c.url} target="_blank" rel="noopener noreferrer" class="inline-block bg-midnight text-white font-semibold px-5 py-2.5 rounded-full hover:bg-midnightdark transition text-center">Donate Now</a>
+        </div>
+      ))}
+    </div>
+  </section>
+</Layout>

@@ -1,0 +1,109 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import ical from 'node-ical';
+
+// Pulls upcoming dates straight from the Draper Family Light Show Facebook Events feed,
+// so you only have to post a date once (on Facebook) instead of in two places.
+const FB_ICAL_URL = 'https://www.facebook.com/events/ical/upcoming/?uid=100048064763908&key=kHqIYgMPovIjpS9h';
+const FB_EVENTS_PAGE = 'https://www.facebook.com/draperfamilylightshow/events/';
+
+const now = new Date();
+const oneYearOut = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+type ScheduleEvent = {
+  title: string;
+  date: Date;
+  location?: string;
+  url?: string;
+  source: 'facebook' | 'manual';
+};
+
+let fbEvents: ScheduleEvent[] = [];
+let fbFeedError = false;
+
+try {
+  const data = await ical.async.fromURL(FB_ICAL_URL);
+  for (const ev of Object.values(data)) {
+    if (!ev || ev.type !== 'VEVENT') continue;
+
+    if (ev.rrule) {
+      const instances = ical.expandRecurringEvent(ev, { from: now, to: oneYearOut });
+      for (const inst of instances) {
+        fbEvents.push({
+          title: inst.summary,
+          date: inst.start,
+          location: inst.location,
+          url: ev.url,
+          source: 'facebook',
+        });
+      }
+    } else if (ev.start && ev.start >= now) {
+      fbEvents.push({
+        title: ev.summary,
+        date: ev.start,
+        location: ev.location,
+        url: ev.url,
+        source: 'facebook',
+      });
+    }
+  }
+} catch (err) {
+  // Cloudflare's build servers have full internet access, so this fetch runs fine on deploy —
+  // it only fails here if the Facebook feed is briefly unreachable or its URL/key changes.
+  console.warn('[event-schedule] Could not load the Facebook events feed:', err);
+  fbFeedError = true;
+}
+
+// Optional manual dates for anything not posted to Facebook (e.g. a one-off event).
+const manualEvents: ScheduleEvent[] = (await getCollection('events')).map((e) => ({
+  title: e.data.title,
+  date: e.data.date,
+  source: 'manual',
+}));
+
+const upcoming = [...fbEvents, ...manualEvents].sort((a, b) => a.date.valueOf() - b.date.valueOf());
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+const fmtTime = (d: Date) =>
+  d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+---
+<Layout title="Event Schedule" description="Upcoming Draper Family Light Show dates in Kenton, Ohio.">
+  <section class="max-w-4xl mx-auto px-4 py-16">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-midnight text-center mb-2">Kenton Holiday Lighting Event List</h1>
+    <p class="text-center text-slate-600 mb-2">352 N Cherry St, Kenton, OH 43326 &middot; every show is free</p>
+    <p class="text-center text-sm text-slate-400 mb-10">
+      Dates below sync automatically from our
+      <a href={FB_EVENTS_PAGE} target="_blank" rel="noopener noreferrer" class="underline">Facebook Events</a>.
+    </p>
+
+    {fbFeedError && upcoming.length === 0 && (
+      <p class="text-center text-slate-500 mb-10">
+        Couldn't load dates right now — check
+        <a href={FB_EVENTS_PAGE} target="_blank" rel="noopener noreferrer" class="underline">our Facebook page</a> directly.
+      </p>
+    )}
+
+    {!fbFeedError && upcoming.length === 0 && (
+      <p class="text-center text-slate-500 mb-10">No dates posted yet — check back soon!</p>
+    )}
+
+    <ul class="space-y-3">
+      {upcoming.map((event) => (
+        <li class="flex items-center justify-between gap-4 bg-white rounded-lg shadow p-4">
+          <div>
+            <p class="font-semibold text-midnight">{event.title}</p>
+            <p class="text-sm text-slate-500">
+              {fmt(event.date)} &middot; {fmtTime(event.date)}
+              {event.location && <> &middot; {event.location}</>}
+            </p>
+          </div>
+          {event.url && (
+            <a href={event.url} target="_blank" rel="noopener noreferrer" class="text-sm font-medium text-midnight hover:underline whitespace-nowrap">Facebook &rarr;</a>
+          )}
+        </li>
+      ))}
+    </ul>
+  </section>
+</Layout>

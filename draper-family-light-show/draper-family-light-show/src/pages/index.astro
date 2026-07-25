@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const shows = (await getCollection('shows')).sort((a, b) => a.data.order - b.data.order);
+const featured = shows.find((s) => s.data.featured) ?? shows[0];
+---
+<Layout title="Home">
+  <section class="bg-gradient-to-b from-midnight to-midnightdark text-white">
+    <div class="max-w-6xl mx-auto px-4 py-20 text-center">
+      <p class="uppercase tracking-widest text-amber-300 text-sm font-semibold mb-3">
+        {featured.data.months}
+      </p>
+      <h1 class="text-4xl md:text-6xl font-extrabold mb-4">{featured.data.title} is Coming</h1>
+      <p class="max-w-2xl mx-auto text-lg text-slate-200 mb-8">{featured.data.tagline}</p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="/event-schedule" class="bg-amber-400 text-midnightdark font-bold px-6 py-3 rounded-full hover:bg-amber-300 transition">Upcoming Shows</a>
+        <a href={`/shows/${featured.slug}`} class="border border-white/50 px-6 py-3 rounded-full hover:bg-white/10 transition">Learn More</a>
+      </div>
+    </div>
+    <div class="string-lights"></div>
+  </section>
+
+  <section class="max-w-6xl mx-auto px-4 py-16">
+    <div class="grid md:grid-cols-3 gap-8 text-center">
+      <div>
+        <h2 class="font-bold text-xl mb-2 text-midnight">Our Vision</h2>
+        <p class="text-slate-600">We want to create a magical experience that delights and inspires families through a stunning display of lights and music — brightening lives and fostering community in Northwest Ohio.</p>
+      </div>
+      <div>
+        <h2 class="font-bold text-xl mb-2 text-midnight">Our Holidays</h2>
+        <p class="text-slate-600">We put on free lighting and special events for holidays throughout the year — Valentine's Day, May the 4th, Memorial Day, July 4th, Halloween, and Christmas, to name a few.</p>
+      </div>
+      <div>
+        <h2 class="font-bold text-xl mb-2 text-midnight">Our Show</h2>
+        <p class="text-slate-600">Lots of lights, festive decorations, and special events throughout the year. A family-friendly tradition for the whole community — and always free.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-slate-100 py-16">
+    <div class="max-w-6xl mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center text-midnight mb-10">Our Shows</h2>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {shows.map((show) => (
+          <a href={`/shows/${show.slug}`} class="block bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden group">
+            <div class="h-2" style={`background-color:${show.data.accent}`}></div>
+            <div class="p-6">
+              <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">{show.data.months}</p>
+              <h3 class="font-bold text-lg text-midnight group-hover:underline">{show.data.title}</h3>
+              <p class="text-sm text-slate-600 mt-2">{show.data.tagline}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-4xl mx-auto px-4 py-16 text-center">
+    <h2 class="text-2xl font-bold text-midnight mb-3">Help Our Cause</h2>
+    <p class="text-slate-600 mb-6">Every show is free. Your support helps us fund the United Way of Hardin County and keep the lights on for the whole community.</p>
+    <a href="/donate" class="inline-block bg-midnight text-white font-semibold px-6 py-3 rounded-full hover:bg-midnightdark transition">Donate</a>
+  </section>
+
+  <section class="bg-midnight text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-2xl font-bold mb-3">Better Yet, See Us In Person</h2>
+      <p class="text-slate-200 mb-2">352 N Cherry St, Kenton, OH 43326</p>
+      <p class="text-slate-300 text-sm mb-6">We are open during the holidays listed on our site.</p>
+      <a href="/contact" class="inline-block bg-white text-midnight font-semibold px-6 py-3 rounded-full hover:bg-slate-100 transition">Get In Touch</a>
+    </div>
+  </section>
+</Layout>

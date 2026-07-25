@@ -1,0 +1,13 @@
+{
+  "name": "Draper Family Light Show",
+  "short_name": "Draper Lights",
+  "description": "Free holiday light & projection shows and the Scary On Cherry haunted house in Kenton, Ohio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#191970",
+  "theme_color": "#191970",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

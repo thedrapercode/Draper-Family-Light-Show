@@ -1,0 +1,68 @@
+---
+import { getCollection } from 'astro:content';
+const shows = (await getCollection('shows')).sort((a, b) => a.data.order - b.data.order);
+const currentPath = Astro.url.pathname;
+---
+<header class="sticky top-0 z-50 shadow-md">
+  <div class="bg-midnight text-white text-center text-sm py-1.5 px-2">
+    Tune to <strong>106.9 FM</strong> on your car radio, or <a href="/listen-now" class="underline hover:text-amber-300">listen online</a> to hear our lights!
+  </div>
+  <nav class="bg-white">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
+      <a href="/" class="flex items-center gap-2 font-bold text-midnight text-lg">
+        <span aria-hidden="true">✨</span> Draper Family Light Show
+      </a>
+
+      <button id="nav-toggle" class="md:hidden text-midnight" aria-label="Toggle menu" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <ul id="nav-menu" class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700">
+        <li><a href="/" class:list={["hover:text-midnight", currentPath === '/' && 'text-midnight font-bold']}>Home</a></li>
+        <li class="relative group">
+          <button class="hover:text-midnight flex items-center gap-1">
+            Our Shows
+            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+          <ul class="absolute left-0 top-full hidden group-hover:block bg-white shadow-lg rounded-md py-2 w-56">
+            {shows.map((show) => (
+              <li>
+                <a href={`/shows/${show.slug}`} class="block px-4 py-2 hover:bg-slate-100">{show.data.title}</a>
+              </li>
+            ))}
+          </ul>
+        </li>
+        <li><a href="/event-schedule" class="hover:text-midnight">Event Schedule</a></li>
+        <li><a href="/listen-now" class="hover:text-midnight">Listen Now</a></li>
+        <li><a href="/now-playing" class="hover:text-midnight">Now Playing</a></li>
+        <li><a href="/donate" class="hover:text-midnight">Donate</a></li>
+        <li><a href="/contact" class="hover:text-midnight">Contact</a></li>
+      </ul>
+    </div>
+
+    <ul id="nav-menu-mobile" class="hidden md:hidden flex-col px-4 pb-4 gap-1 text-slate-700">
+      <li><a href="/" class="block py-2">Home</a></li>
+      {shows.map((show) => (
+        <li><a href={`/shows/${show.slug}`} class="block py-2 pl-3">{show.data.title}</a></li>
+      ))}
+      <li><a href="/event-schedule" class="block py-2">Event Schedule</a></li>
+      <li><a href="/listen-now" class="block py-2">Listen Now</a></li>
+      <li><a href="/now-playing" class="block py-2">Now Playing</a></li>
+      <li><a href="/donate" class="block py-2">Donate</a></li>
+      <li><a href="/contact" class="block py-2">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const mobileMenu = document.getElementById('nav-menu-mobile');
+  toggle?.addEventListener('click', () => {
+    const isHidden = mobileMenu?.classList.contains('hidden');
+    mobileMenu?.classList.toggle('hidden');
+    mobileMenu?.classList.toggle('flex');
+    toggle.setAttribute('aria-expanded', String(isHidden));
+  });
+</script>

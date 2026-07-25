@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Now Playing" description="See what song is currently playing at the Draper Family Light Show.">
+  <section class="max-w-3xl mx-auto px-4 py-16 text-center">
+    <h1 class="text-3xl md:text-4xl font-extrabold text-midnight mb-4">Now Playing</h1>
+    <p class="text-slate-600 mb-8">
+      Here's what song is playing at the show right now, pulled live from our Remote Falcon display.
+    </p>
+
+    <div class="rounded-xl overflow-hidden shadow-lg bg-white">
+      <embed
+        type="text/html"
+        src="https://draperlightshow.remotefalcon.com/remote-falcon"
+        width="100%"
+        height="300"
+      />
+    </div>
+
+    <!--
+      NOTE FOR FUTURE YOU: this embeds Remote Falcon just to show the current song title.
+      If you'd rather build your own lightweight "Now Playing" widget straight from FPP's
+      status API (e.g. GET /api/fppd/status on your FPP box) instead of embedding a whole
+      Remote Falcon page, that's very doable — see the README for a sketch of how that could work.
+    -->
+  </section>
+</Layout>

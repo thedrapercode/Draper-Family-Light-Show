@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Contact" description="Get in touch with the Draper Family Light Show, or come see us in person.">
+  <section class="max-w-4xl mx-auto px-4 py-16 grid md:grid-cols-2 gap-12">
+    <div>
+      <h1 class="text-3xl font-extrabold text-midnight mb-4">Better Yet, See Us In Person!</h1>
+      <p class="text-slate-600 mb-6">
+        To learn more about our FREE show offerings and upcoming events, send us a message — we'll get back to
+        you soon!
+      </p>
+      <div class="bg-white rounded-xl shadow p-6 mb-6">
+        <h2 class="font-bold text-midnight mb-1">Draper Family Light Show</h2>
+        <p class="text-slate-600">352 N Cherry St, Kenton, OH 43326, USA</p>
+        <a
+          href="https://www.google.com/maps/search/?api=1&query=352+N+Cherry+St+Kenton+OH+43326"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-block mt-3 text-sm font-medium text-midnight hover:underline"
+        >Get Directions &rarr;</a>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="font-bold text-midnight mb-1">Hours</h2>
+        <p class="text-slate-600 text-sm">We are open during the holidays listed on our <a href="/event-schedule" class="underline">Event Schedule</a>.</p>
+      </div>
+    </div>
+
+    <form
+      action="mailto:thedraperpro@gmail.com"
+      method="post"
+      enctype="text/plain"
+      class="bg-white rounded-xl shadow p-6 space-y-4"
+    >
+      <h2 class="font-bold text-midnight text-lg mb-2">Send a Message</h2>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1" for="name">Name</label>
+        <input id="name" name="name" type="text" required class="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1" for="email">Email</label>
+        <input id="email" name="email" type="email" required class="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1" for="message">Message</label>
+        <textarea id="message" name="message" rows="4" required class="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-midnight"></textarea>
+      </div>
+      <button type="submit" class="w-full bg-midnight text-white font-semibold py-2.5 rounded-full hover:bg-midnightdark transition">Send Message</button>
+      <p class="text-xs text-slate-400">
+        This opens your email app to send the message. See the README for how to swap in an in-page form service instead.
+      </p>
+    </form>
+  </section>
+</Layout>
