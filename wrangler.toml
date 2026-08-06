@@ -1,6 +1,7 @@
 name = "draper-family-light-show"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = true
 
 # Run: npx wrangler d1 create draper-light-show-db
 # Then replace the database_id below with the ID from that command output.
