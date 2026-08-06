@@ -1,0 +1,19 @@
+{
+  "name": "Draper Family Light Show",
+  "short_name": "Draper Lights",
+  "description": "Free holiday light and projection shows in Kenton, Ohio. Scary on Cherry, Merry on Cherry, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a12",
+  "theme_color": "#0a0a12",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Now Playing", "url": "/now-playing", "description": "See what's playing live" },
+    { "name": "Event Schedule", "url": "/event-schedule", "description": "Upcoming show dates" }
+  ],
+  "categories": ["entertainment", "events", "music"]
+}

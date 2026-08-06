@@ -1,0 +1,70 @@
+---
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import AnnouncementBanner from '../components/AnnouncementBanner.astro';
+import '../styles/global.css';
+import rawSettings from '../content/settings/site.json';
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+}
+
+const {
+  title,
+  description = 'Free holiday light & projection shows and the Scary On Cherry haunted house in Kenton, Ohio.',
+  image = '/images/og-default.jpg',
+} = Astro.props;
+
+const settings = rawSettings;
+const testMode = import.meta.env.PUBLIC_TEST_MODE === 'true';
+---
+<!doctype html>
+<html lang="en" data-season={settings.season}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0a0a12" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <title>{title} | Draper Family Light Show</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={`${title} | Draper Family Light Show`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} | Draper Family Light Show`} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+  </head>
+  <body>
+    {testMode && (
+      <div style="background:#b45309;color:#fff;text-align:center;padding:0.5rem 1rem;font-size:0.8125rem;font-weight:700;letter-spacing:0.05em;position:sticky;top:0;z-index:100;">
+        TEST MODE: Square sandbox active · Emails redirect to thedraperpro@gmail.com · Not visible to public
+      </div>
+    )}
+    {settings.announcement && (
+      <AnnouncementBanner message={settings.announcement} link={settings.announcementLink} />
+    )}
+    <Nav season={settings.season} showActive={settings.showActive} />
+    <main>
+      <slot />
+    </main>
+    <Footer season={settings.season} />
+    <script>
+      // Register service worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

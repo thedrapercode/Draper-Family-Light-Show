@@ -1,0 +1,164 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
+import { getCollection, render } from 'astro:content';
+import ticketingSettings from '../../content/ticketing/settings.json';
+
+export async function getStaticPaths() {
+  const shows = await getCollection('shows');
+  return shows.map((show) => ({
+    params: { slug: show.id },
+    props: { show },
+  }));
+}
+
+const { show } = Astro.props;
+const { Content } = await render(show);
+
+const title = show.data.title;
+---
+<Layout title={title} description={show.data.tagline}>
+
+  <!-- Hero -->
+  <section class="show-hero" style={`--show-accent: ${show.data.accent}`}>
+    {show.data.heroImage ? (
+      <div class="show-hero-bg">
+        <img src={show.data.heroImage} alt={title} class="show-hero-img" />
+        <div class="show-hero-overlay"></div>
+      </div>
+    ) : (
+      <div class="show-hero-plain"></div>
+    )}
+    <div class="show-hero-content">
+      <div class="max-w-4xl mx-auto px-4">
+        <p class="section-label mb-3">{show.data.months}</p>
+        <h1 class="show-title">{title}</h1>
+        <p class="show-tagline">{show.data.tagline}</p>
+        <div class="show-meta-row">
+          {show.data.hours && (
+            <span class="meta-badge flex items-center gap-1"><Icon name="clock" size={13} />{show.data.hours}</span>
+          )}
+          <span class="meta-badge flex items-center gap-1"><Icon name="map-pin" size={13} />352 N Cherry St, Kenton OH</span>
+          <span class="meta-badge accent-badge">Always Free</span>
+        </div>
+      </div>
+    </div>
+    <div class="show-accent-line" style={`background: ${show.data.accent}`}></div>
+  </section>
+
+  <!-- Content -->
+  <article class="max-w-3xl mx-auto px-4 py-14">
+    <div class="show-body">
+      <Content />
+    </div>
+
+    {show.data.charity && show.data.charityUrl && (
+      <div class="charity-card">
+        <p class="section-label mb-1">Charity Partner</p>
+        <p class="font-semibold text-base mb-3" style="color: var(--text)">{show.data.charity}</p>
+        <a href={show.data.charityUrl} target="_blank" rel="noopener noreferrer" class="btn-accent text-sm">
+          Donate →
+        </a>
+      </div>
+    )}
+  </article>
+
+  <!-- Get Tickets CTA (Scary on Cherry only, when ticketing is open) -->
+  {show.id === 'scary-on-cherry' && ticketingSettings.enabled && (
+    <section class="max-w-3xl mx-auto px-4 pb-6">
+      <a href="/tickets/scary-on-cherry" class="btn-accent block text-center text-base py-4" style="font-size:1.0625rem">
+        Reserve Free Tickets
+      </a>
+    </section>
+  )}
+
+  <!-- Quick links -->
+  <section class="max-w-3xl mx-auto px-4 pb-16 flex gap-4 flex-wrap">
+    <a href="/event-schedule" class="btn-outline">View Show Schedule</a>
+    <a href="/gallery" class="btn-outline">Photo Gallery</a>
+    <a href="/now-playing" class="btn-outline">Now Playing</a>
+  </section>
+
+</Layout>
+
+<style>
+  .show-hero {
+    position: relative;
+    overflow: hidden;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .show-hero-bg {
+    position: absolute;
+    inset: 0;
+  }
+  .show-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .show-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--bg) 20%, transparent 80%);
+  }
+  .show-hero-plain {
+    position: absolute;
+    inset: 0;
+    background: var(--hero-grad);
+  }
+  .show-hero-content {
+    position: relative;
+    padding: 3rem 0 2.5rem;
+  }
+  .show-title {
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+  .show-tagline {
+    font-size: 1.0625rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    max-width: 32rem;
+  }
+  .show-meta-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .meta-badge {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .accent-badge {
+    background: color-mix(in srgb, var(--show-accent) 20%, transparent);
+    border-color: var(--show-accent);
+    color: var(--show-accent);
+  }
+  .show-accent-line { height: 3px; position: relative; }
+
+  .show-body {
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    margin-bottom: 2rem;
+  }
+  .show-body p { margin-bottom: 1em; }
+
+  .charity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+</style>

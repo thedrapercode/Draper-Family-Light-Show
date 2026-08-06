@@ -1,0 +1,32 @@
+---
+interface Props {
+  message: string;
+  link?: string;
+}
+const { message, link } = Astro.props;
+---
+
+<div class="announcement-bar" role="banner" aria-label="Site announcement">
+  <div class="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-center gap-3 text-sm text-center">
+    <span class="font-semibold" style="color: var(--text)">
+      {link ? (
+        <a href={link} class="hover:underline underline-offset-2" style="color: inherit">{message}</a>
+      ) : (
+        message
+      )}
+    </span>
+    {link && (
+      <a href={link} class="shrink-0 text-xs font-bold px-3 py-1 rounded-full transition-opacity hover:opacity-80"
+         style="background: var(--accent); color: var(--bg)">
+        Learn More →
+      </a>
+    )}
+  </div>
+</div>
+
+<style>
+  .announcement-bar {
+    background: linear-gradient(90deg, var(--accent-warm), var(--accent));
+    color: var(--bg);
+  }
+</style>

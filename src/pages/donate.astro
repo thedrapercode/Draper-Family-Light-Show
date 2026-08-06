@@ -1,0 +1,51 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+
+const charities = [
+  {
+    name: 'United Way of Hardin County',
+    blurb: '98% of every donation stays in Hardin County, directly supporting health, education, and financial stability programs for local families.',
+    url: 'https://secure.givelively.org/donate/united-way-of-hardin-county-ohio-inc/draper-family-light-show',
+    icon: 'users',
+  },
+  {
+    name: "St. Jude Children's Research Hospital",
+    blurb: 'Families at St. Jude never receive a bill for treatment, travel, housing, or food, so they can focus on what matters most.',
+    url: 'http://fundraising.stjude.org/goto/DraperLightShow',
+    icon: 'heart',
+  },
+];
+---
+<Layout title="Donate" description="Support the charities behind the Draper Family Light Show.">
+
+  <section class="max-w-3xl mx-auto px-4 py-14">
+    <p class="section-label text-center mb-2">Give Back</p>
+    <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-3" style="color: var(--text)">Help Our Cause</h1>
+    <p class="text-center text-sm mb-12 max-w-xl mx-auto" style="color: var(--text-muted)">
+      Every Draper Family Light Show is completely free. If you're able, please consider supporting one of the
+      charities we raise money for. 100% of donations go directly to them.
+    </p>
+
+    <div class="grid sm:grid-cols-2 gap-5">
+      {charities.map((c) => (
+        <div class="card p-6 flex flex-col">
+          <div class="mb-3" style="color: var(--accent)"><Icon name={c.icon} size={36} /></div>
+          <h2 class="font-bold text-base mb-2" style="color: var(--text)">{c.name}</h2>
+          <p class="text-sm leading-relaxed flex-1 mb-5" style="color: var(--text-muted)">{c.blurb}</p>
+          <a href={c.url} target="_blank" rel="noopener noreferrer" class="btn-accent text-sm text-center">
+            Donate Now →
+          </a>
+        </div>
+      ))}
+    </div>
+
+    <div class="card p-6 mt-8 text-center">
+      <p class="text-sm" style="color: var(--text-muted)">
+        Want to volunteer or partner with us?
+        <a href="/contact" class="font-semibold underline underline-offset-2 hover:opacity-80 transition-opacity" style="color: var(--accent)">Get in touch</a>.
+      </p>
+    </div>
+  </section>
+
+</Layout>

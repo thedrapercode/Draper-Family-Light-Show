@@ -1,0 +1,36 @@
+---
+import Layout from '../layouts/Layout.astro';
+import NowPlaying from '../components/NowPlaying.astro';
+import Icon from '../components/Icon.astro';
+import rawSettings from '../content/settings/site.json';
+
+const settings = rawSettings;
+---
+<Layout title="Now Playing" description="See what's playing live at the Draper Family Light Show and listen online.">
+
+  <section class="max-w-3xl mx-auto px-4 py-14">
+    <p class="section-label text-center mb-2">Live Show</p>
+    <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-3" style="color: var(--text)">Now Playing</h1>
+    <p class="text-center text-sm mb-10" style="color: var(--text-muted)">
+      What's on right now at 352 N Cherry St, Kenton, Ohio &mdash; updated live.
+    </p>
+
+    <NowPlaying
+      showActive={settings.showActive}
+      nextEventName={settings.nextEventName}
+      nextEventDate={settings.nextEventDate}
+      nowPlayingImage={settings.nowPlayingImage}
+      season={settings.season}
+    />
+
+    <div class="mt-10 card p-6 text-sm" style="color: var(--text-muted)">
+      <p class="font-semibold mb-2" style="color: var(--text)">How to Tune In</p>
+      <ul class="space-y-2">
+        <li class="flex items-start gap-2"><Icon name="car" size={16} class="shrink-0 mt-0.5" /><span><strong style="color: var(--text)">Car radio:</strong> Tune to <strong style="color: var(--accent)">106.9 FM</strong> while parked at the show.</span></li>
+        <li class="flex items-start gap-2"><Icon name="phone" size={16} class="shrink-0 mt-0.5" /><span><strong style="color: var(--text)">Online:</strong> Use the player above to stream from anywhere.</span></li>
+        <li class="flex items-start gap-2"><Icon name="map-pin" size={16} class="shrink-0 mt-0.5" /><span><strong style="color: var(--text)">Location:</strong> 352 N Cherry St, Kenton, OH 43326</span></li>
+      </ul>
+    </div>
+  </section>
+
+</Layout>

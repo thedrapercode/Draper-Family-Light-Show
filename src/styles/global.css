@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+/* ─── Seasonal CSS variables ──────────────────────────────────────────────── */
+
+:root {
+  --bg:           #0a0a12;
+  --surface:      #12121e;
+  --surface-2:    #1a1a2e;
+  --border:       #1e1e30;
+  --accent:       #4a7abf;
+  --accent-warm:  #bf9a4a;
+  --text:         #e6e8f0;
+  --text-muted:   #8890a0;
+  --text-subtle:  #5a6070;
+  --hero-grad:    linear-gradient(160deg, #0a0a12 0%, #0d0d22 60%, #0a0a1a 100%);
+  --card-glow:    rgba(74, 122, 191, 0.15);
+  --season-icon:  '⭐';
+  --string-color-1: #4a7abf;
+  --string-color-2: #bf9a4a;
+  --string-color-3: #7a9abf;
+  --string-color-4: #bf7a4a;
+}
+
+[data-season="halloween"] {
+  --bg:           #06030a;
+  --surface:      #0f0615;
+  --surface-2:    #180a22;
+  --border:       #2a0f3a;
+  --accent:       #f97316;
+  --accent-warm:  #a855f7;
+  --text:         #f5eeff;
+  --text-muted:   #b09ac8;
+  --text-subtle:  #6b5880;
+  --hero-grad:    linear-gradient(160deg, #06030a 0%, #130520 60%, #0a0310 100%);
+  --card-glow:    rgba(249, 115, 22, 0.15);
+  --season-icon:  '🎃';
+  --string-color-1: #f97316;
+  --string-color-2: #a855f7;
+  --string-color-3: #dc2626;
+  --string-color-4: #7c3aed;
+}
+
+[data-season="christmas"] {
+  --bg:           #040908;
+  --surface:      #081408;
+  --surface-2:    #0f1f0f;
+  --border:       #162616;
+  --accent:       #e53e3e;
+  --accent-warm:  #d4af37;
+  --text:         #f0f7ec;
+  --text-muted:   #90ac88;
+  --text-subtle:  #587050;
+  --hero-grad:    linear-gradient(160deg, #040908 0%, #081808 60%, #040a04 100%);
+  --card-glow:    rgba(229, 62, 62, 0.15);
+  --season-icon:  '🎄';
+  --string-color-1: #e53e3e;
+  --string-color-2: #22c55e;
+  --string-color-3: #d4af37;
+  --string-color-4: #ffffff;
+}
+
+/* ─── Tailwind theme extension ────────────────────────────────────────────── */
+
+@theme {
+  --font-display: "Mountains of Christmas", "Georgia", cursive;
+  --font-body:    "Inter", system-ui, sans-serif;
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: var(--bg);
+    color: var(--text);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--text);
+  }
+}
+
+/* ─── Utility classes ─────────────────────────────────────────────────────── */
+
+@layer utilities {
+  .text-accent     { color: var(--accent); }
+  .text-accent-warm { color: var(--accent-warm); }
+  .text-muted      { color: var(--text-muted); }
+  .text-subtle     { color: var(--text-subtle); }
+  .bg-surface      { background-color: var(--surface); }
+  .bg-surface-2    { background-color: var(--surface-2); }
+  .border-season   { border-color: var(--border); }
+  .hero-gradient   { background: var(--hero-grad); }
+  .accent-glow     { box-shadow: 0 0 40px var(--card-glow); }
+}
+
+/* ─── Component classes ───────────────────────────────────────────────────── */
+
+@layer components {
+  .btn-accent {
+    background-color: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+    padding: 0.625rem 1.5rem;
+    border-radius: 9999px;
+    display: inline-block;
+    transition: opacity 150ms, transform 100ms;
+    text-decoration: none;
+  }
+  .btn-accent:hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+  }
+
+  .btn-outline {
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: 9999px;
+    display: inline-block;
+    transition: border-color 150ms, background-color 150ms;
+    text-decoration: none;
+  }
+  .btn-outline:hover {
+    border-color: var(--accent);
+    background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: box-shadow 200ms, border-color 200ms;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 24px var(--card-glow);
+  }
+
+  .section-label {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+  }
+}
+
+/* ─── String lights ───────────────────────────────────────────────────────── */
+
+.string-lights {
+  position: relative;
+  height: 24px;
+  background-image:
+    radial-gradient(circle, var(--string-color-1) 3px, transparent 4px),
+    radial-gradient(circle, var(--string-color-2) 3px, transparent 4px),
+    radial-gradient(circle, var(--string-color-3) 3px, transparent 4px),
+    radial-gradient(circle, var(--string-color-4) 3px, transparent 4px);
+  background-repeat: repeat-x;
+  background-size: 80px 24px;
+  background-position: 0 8px, 20px 12px, 40px 8px, 60px 12px;
+  opacity: 0.8;
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes slide-down {
+  from { transform: translateY(-10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes count-up {
+  from { transform: translateY(4px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-down { animation: slide-down 300ms ease-out; }

@@ -1,0 +1,206 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const events = await getCollection('partnerEvents');
+  return events.map((event) => ({
+    params: { slug: event.id },
+    props: { event },
+  }));
+}
+
+const { event } = Astro.props;
+const { Content } = await render(event);
+
+const title = typeof event.data.title === 'string'
+  ? event.data.title
+  : (event.data.title as any)?.value ?? '';
+
+const dateStr = event.data.date as string;
+const displayDate = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', {
+  weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+});
+
+const location = (event.data.location as string) || '352 N Cherry St, Kenton, Ohio';
+const startTime = event.data.startTime as string | undefined;
+const endTime = event.data.endTime as string | undefined;
+const ticketUrl = (event.data.externalTicketUrl as string) || null;
+const ticketLabel = (event.data.ticketLabel as string) || 'Get Tickets';
+const inviteOnly = event.data.inviteOnly as boolean;
+const partnerOrgs = (event.data.partnerOrgs as string[]) || [];
+const charity = event.data.charity as string | undefined;
+const charityUrl = (event.data.charityUrl as string) || null;
+---
+
+<Layout
+  title={title}
+  description={`${title} on ${displayDate} at ${location}. A special partner event hosted by Draper Family Light Show.`}
+>
+
+  <section class="event-hero">
+    {event.data.heroImage ? (
+      <div class="hero-bg">
+        <img src={event.data.heroImage as string} alt={title} class="hero-img" />
+        <div class="hero-overlay"></div>
+      </div>
+    ) : (
+      <div class="hero-plain"></div>
+    )}
+    <div class="hero-content">
+      <div class="max-w-4xl mx-auto px-4">
+        <p class="section-label mb-3">Special Event</p>
+        <h1 class="text-3xl md:text-4xl font-extrabold mb-3" style="color: var(--text)">{title}</h1>
+        <div class="meta-row">
+          <span class="meta-badge flex items-center gap-1.5">
+            <Icon name="calendar" size={13} />{displayDate}
+          </span>
+          {startTime && (
+            <span class="meta-badge flex items-center gap-1.5">
+              <Icon name="clock" size={13} />{startTime}{endTime && ` - ${endTime}`}
+            </span>
+          )}
+          <span class="meta-badge flex items-center gap-1.5">
+            <Icon name="map-pin" size={13} />{location}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-accent-line"></div>
+  </section>
+
+  <article class="max-w-3xl mx-auto px-4 py-14">
+
+    {partnerOrgs.length > 0 && (
+      <div class="info-card mb-8">
+        <p class="section-label mb-3">In Partnership With</p>
+        <ul class="org-list">
+          {partnerOrgs.map((org) => (
+            <li class="org-pill">{org}</li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    <div class="event-body">
+      <Content />
+    </div>
+
+    {ticketUrl && !inviteOnly && (
+      <div class="info-card mt-8">
+        <p class="font-bold text-base mb-1" style="color: var(--text)">Tickets Required</p>
+        <p class="text-sm mb-4" style="color: var(--text-muted)">
+          Reserve your spot through our ticketing partner. This is a ticketed event, not a walk-up show.
+        </p>
+        <a
+          href={ticketUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-accent block text-center text-base py-4"
+        >
+          {ticketLabel} →
+        </a>
+      </div>
+    )}
+
+    {inviteOnly && !ticketUrl && (
+      <div class="info-card mt-8" style="border-color: var(--border)">
+        <p class="font-bold text-base mb-1" style="color: var(--text)">Private Event</p>
+        <p class="text-sm" style="color: var(--text-muted)">
+          Tickets for this event are available through our partner organizations. Contact us if you have questions.
+        </p>
+      </div>
+    )}
+
+    {charity && (
+      <div class="charity-section">
+        <p class="section-label mb-1">Benefiting</p>
+        <p class="font-semibold text-base mb-3" style="color: var(--text)">{charity}</p>
+        {charityUrl && (
+          <a href={charityUrl} target="_blank" rel="noopener noreferrer" class="btn-outline inline-block text-sm">
+            Learn More →
+          </a>
+        )}
+      </div>
+    )}
+
+    <div class="mt-12 pt-8 border-t" style="border-color: var(--border)">
+      <a href="/event-schedule" class="text-sm" style="color: var(--text-subtle)">
+        ← Back to Schedule
+      </a>
+    </div>
+
+  </article>
+
+</Layout>
+
+<style>
+  .event-hero {
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    align-items: flex-end;
+    background: var(--bg);
+  }
+  .hero-plain {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 15%, var(--bg)), var(--bg));
+  }
+  .hero-bg { position: absolute; inset: 0; }
+  .hero-img { width: 100%; height: 100%; object-fit: cover; }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--bg) 0%, transparent 60%);
+  }
+  .hero-content {
+    position: relative;
+    padding: 3rem 0 2rem;
+    z-index: 1;
+    width: 100%;
+  }
+  .hero-accent-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .org-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .org-pill {
+    background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+    color: var(--text);
+    border-radius: 2rem;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  .event-body {
+    line-height: 1.75;
+    color: var(--text-muted);
+  }
+  .event-body p { margin-bottom: 1rem; }
+  .charity-section {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+</style>

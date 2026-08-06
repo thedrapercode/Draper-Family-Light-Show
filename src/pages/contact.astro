@@ -1,0 +1,90 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+---
+<Layout title="Contact" description="Get in touch with the Draper Family Light Show in Kenton, Ohio.">
+
+  <section class="max-w-4xl mx-auto px-4 py-14 grid md:grid-cols-2 gap-10">
+
+    <!-- Left: info -->
+    <div>
+      <p class="section-label mb-2">Get In Touch</p>
+      <h1 class="text-3xl font-extrabold mb-4" style="color: var(--text)">Come See Us In Person</h1>
+      <p class="text-sm leading-relaxed mb-8" style="color: var(--text-muted)">
+        To learn more about our free show offerings, upcoming events, or sponsorship opportunities, send us a message and we'll get back to you soon.
+      </p>
+
+      <div class="card p-5 mb-4">
+        <p class="font-semibold mb-1 flex items-center gap-1.5" style="color: var(--text)"><Icon name="map-pin" size={16} />Location</p>
+        <p class="text-sm" style="color: var(--text-muted)">Draper Family Light Show<br />352 N Cherry St<br />Kenton, OH 43326</p>
+        <a href="https://www.google.com/maps/search/?api=1&query=352+N+Cherry+St+Kenton+OH+43326"
+           target="_blank" rel="noopener noreferrer"
+           class="text-sm font-semibold mt-3 inline-block" style="color: var(--accent)">
+          Get Directions →
+        </a>
+      </div>
+
+      <div class="card p-5 mb-4">
+        <p class="font-semibold mb-1 flex items-center gap-1.5" style="color: var(--text)"><Icon name="clock" size={16} />Hours</p>
+        <p class="text-sm" style="color: var(--text-muted)">
+          Open during the holidays listed on our
+          <a href="/event-schedule" class="underline underline-offset-2 hover:opacity-80" style="color: var(--accent)">Event Schedule</a>.
+          Always free. No tickets needed.
+        </p>
+      </div>
+
+      <div class="card p-5">
+        <p class="font-semibold mb-2" style="color: var(--text)">Follow Along</p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          <a href="https://www.facebook.com/draperfamilylightshow/" target="_blank" rel="noopener noreferrer" class="font-medium hover:opacity-80 transition-opacity" style="color: var(--accent)">Facebook</a>
+          <a href="https://www.instagram.com/draperfamilylightshow/" target="_blank" rel="noopener noreferrer" class="font-medium hover:opacity-80 transition-opacity" style="color: var(--accent)">Instagram</a>
+          <a href="https://www.tiktok.com/@draperfamilyshow" target="_blank" rel="noopener noreferrer" class="font-medium hover:opacity-80 transition-opacity" style="color: var(--accent)">TikTok</a>
+          <a href="https://www.youtube.com/@draperfamilylightshow" target="_blank" rel="noopener noreferrer" class="font-medium hover:opacity-80 transition-opacity" style="color: var(--accent)">YouTube</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: form -->
+    <form
+      action="mailto:thedraperpro@gmail.com"
+      method="post"
+      enctype="text/plain"
+      class="card p-6 flex flex-col gap-4"
+    >
+      <h2 class="font-bold text-lg" style="color: var(--text)">Send a Message</h2>
+
+      <div>
+        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color: var(--text-muted)" for="name">Name</label>
+        <input id="name" name="name" type="text" required class="form-input" placeholder="Your name" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color: var(--text-muted)" for="email">Email</label>
+        <input id="email" name="email" type="email" required class="form-input" placeholder="you@example.com" />
+      </div>
+      <div class="flex-1">
+        <label class="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style="color: var(--text-muted)" for="message">Message</label>
+        <textarea id="message" name="message" rows="5" required class="form-input resize-none" placeholder="What's on your mind?"></textarea>
+      </div>
+      <button type="submit" class="btn-accent text-center w-full">Send Message</button>
+      <p class="text-xs text-center" style="color: var(--text-subtle)">Opens your email app to send.</p>
+    </form>
+
+  </section>
+
+</Layout>
+
+<style>
+  .form-input {
+    width: 100%;
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    color: var(--text);
+    font-size: 0.9375rem;
+    transition: border-color 150ms;
+    outline: none;
+  }
+  .form-input::placeholder { color: var(--text-subtle); }
+  .form-input:focus { border-color: var(--accent); }
+</style>

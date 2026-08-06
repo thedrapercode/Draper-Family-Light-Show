@@ -1,0 +1,73 @@
+---
+interface Props {
+  season: string;
+}
+const { season } = Astro.props;
+
+const socials = [
+  { name: 'Facebook', url: 'https://www.facebook.com/draperfamilylightshow/', icon: 'fb' },
+  { name: 'Instagram', url: 'https://www.instagram.com/draperfamilylightshow/', icon: 'ig' },
+  { name: 'TikTok', url: 'https://www.tiktok.com/@draperfamilyshow', icon: 'tt' },
+  { name: 'YouTube', url: 'https://www.youtube.com/@draperfamilylightshow', icon: 'yt' },
+];
+---
+
+<footer class="footer mt-20">
+  <div class="string-lights"></div>
+  <div class="max-w-6xl mx-auto px-4 py-12 grid gap-10 md:grid-cols-3">
+    <div>
+      <div class="flex items-center gap-2 font-bold text-base mb-3" style="color: var(--text)">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <path d="M14 4 L17 11 L24 11 L18.5 15.5 L20.5 22 L14 18 L7.5 22 L9.5 15.5 L4 11 L11 11 Z" fill="var(--accent)"/>
+        </svg>
+        Draper Family Light Show
+      </div>
+      <p class="text-sm mb-1" style="color: var(--text-muted)">352 N Cherry St<br />Kenton, OH 43326</p>
+      <p class="text-sm mt-2" style="color: var(--text-muted)">Free, family-friendly light &amp; projection shows all year long.</p>
+      <p class="text-sm mt-2 font-semibold" style="color: var(--accent)">Tune in: 106.9 FM</p>
+    </div>
+    <div>
+      <h3 class="section-label mb-4">Explore</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/event-schedule" class="footer-link">Event Schedule</a></li>
+        <li><a href="/gallery" class="footer-link">Photo Gallery</a></li>
+        <li><a href="/now-playing" class="footer-link">Now Playing</a></li>
+        <li><a href="/listen-now" class="footer-link">Listen Online (106.9 FM)</a></li>
+        <li><a href="/donate" class="footer-link">Donate</a></li>
+        <li><a href="/contact" class="footer-link">Contact</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="section-label mb-4">Follow Along</h3>
+      <ul class="space-y-2 text-sm">
+        {socials.map((s) => (
+          <li>
+            <a href={s.url} target="_blank" rel="noopener noreferrer" class="footer-link flex items-center gap-2">
+              <span style="color: var(--accent)">→</span>
+              {s.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+  <div class="border-t text-center text-xs py-4 px-4" style="border-color: var(--border); color: var(--text-subtle)">
+    &copy; {new Date().getFullYear()} Draper Family Light Show &mdash; Kenton, Ohio &mdash; All Rights Reserved
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background-color: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 150ms;
+  }
+  .footer-link:hover {
+    color: var(--accent);
+  }
+</style>

@@ -1,0 +1,257 @@
+---
+export const prerender = false;
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import ical from 'node-ical';
+import ticketingSettings from '../content/ticketing/settings.json';
+
+const FB_ICAL_URL = 'https://www.facebook.com/events/ical/upcoming/?uid=100048064763908&key=kHqIYgMPovIjpS9h';
+const FB_EVENTS_PAGE = 'https://www.facebook.com/draperfamilylightshow/events/';
+
+const now = new Date();
+const oneYearOut = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+type ScheduleEvent = {
+  title: string;
+  date: Date;
+  location?: string;
+  source: 'facebook' | 'show' | 'partner';
+  href?: string;
+  externalTicketUrl?: string;
+  ticketLabel?: string;
+  inviteOnly?: boolean;
+  cancelled?: boolean;
+};
+
+// Build set of dates already covered by show/partner events so we can
+// deduplicate Facebook events that overlap.
+const showDatesSet = new Set(ticketingSettings.showDates);
+
+// Scary on Cherry dates from ticketing settings (source of truth).
+// Use T12:00:00 to avoid UTC midnight rolling back a day in Eastern time.
+const showEvents: ScheduleEvent[] = ticketingSettings.showDates.map((d) => ({
+  title: 'Scary on Cherry',
+  date: new Date(d + 'T12:00:00'),
+  source: 'show' as const,
+  href: '/shows/scary-on-cherry',
+  location: '352 N Cherry St, Kenton, OH',
+}));
+
+// Partner events from Keystatic content collection.
+let partnerEvents: ScheduleEvent[] = [];
+try {
+  const entries = await getCollection('partnerEvents');
+  partnerEvents = entries.map((e) => {
+    const raw = e.data.title as string | { value: string };
+    const t = typeof raw === 'string' ? raw : raw.value;
+    return {
+      title: t,
+      date: new Date((e.data.date as string) + 'T12:00:00'),
+      source: 'partner' as const,
+      href: `/events/${e.id}`,
+      location: (e.data.location as string) || undefined,
+      externalTicketUrl: (e.data.externalTicketUrl as string) || undefined,
+      ticketLabel: (e.data.ticketLabel as string) || 'Get Tickets',
+      inviteOnly: (e.data.inviteOnly as boolean) || false,
+    };
+  });
+} catch {
+  // Collection may not exist yet; continue without partner events.
+}
+
+const partnerDatesSet = new Set(partnerEvents.map((e) => e.date.toDateString()));
+
+// Facebook iCal events, deduplicated against known show/partner dates.
+let fbEvents: ScheduleEvent[] = [];
+let fbFeedError = false;
+
+try {
+  const data = await ical.async.fromURL(FB_ICAL_URL);
+  const toStr = (v: unknown): string => {
+    if (!v) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'object' && 'val' in v) return String((v as any).val);
+    return String(v);
+  };
+  for (const ev of Object.values(data)) {
+    if (!ev || ev.type !== 'VEVENT') continue;
+    if (ev.rrule) {
+      const instances = ical.expandRecurringEvent(ev, { from: now, to: oneYearOut });
+      for (const inst of instances) {
+        const d = inst.start;
+        if (!showDatesSet.has(d.toISOString().slice(0, 10)) && !partnerDatesSet.has(d.toDateString())) {
+          fbEvents.push({ title: toStr(inst.summary), date: d, source: 'facebook', href: toStr(ev.url) || undefined });
+        }
+      }
+    } else if (ev.start && ev.start >= now) {
+      const d = ev.start;
+      if (!showDatesSet.has(d.toISOString().slice(0, 10)) && !partnerDatesSet.has(d.toDateString())) {
+        fbEvents.push({ title: toStr(ev.summary), date: d, source: 'facebook', href: toStr(ev.url) || undefined });
+      }
+    }
+  }
+} catch {
+  fbFeedError = true;
+}
+
+const upcoming = [...showEvents, ...partnerEvents, ...fbEvents]
+  .filter((ev) => ev.date >= now)
+  .sort((a, b) => a.date.valueOf() - b.date.valueOf());
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+const byMonth: Record<string, ScheduleEvent[]> = {};
+for (const ev of upcoming) {
+  const key = ev.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  if (!byMonth[key]) byMonth[key] = [];
+  byMonth[key].push(ev);
+}
+---
+
+<Layout title="Event Schedule" description="Upcoming Draper Family Light Show dates in Kenton, Ohio.">
+
+  <section class="max-w-4xl mx-auto px-4 py-14">
+    <p class="section-label text-center mb-2">Free Admission Always</p>
+    <h1 class="text-3xl md:text-4xl font-extrabold text-center mb-2" style="color: var(--text)">
+      Kenton Holiday Show Schedule
+    </h1>
+    <p class="text-center text-sm mb-2" style="color: var(--text-muted)">
+      352 N Cherry St, Kenton, OH 43326
+    </p>
+    <p class="text-center text-xs mb-10" style="color: var(--text-subtle)">
+      Dates sync from our
+      <a href={FB_EVENTS_PAGE} target="_blank" rel="noopener noreferrer" class="underline hover:text-accent transition-colors">Facebook Events page</a>.
+    </p>
+
+    {ticketingSettings.enabled && (
+      <div class="card p-5 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <p class="font-bold" style="color: var(--text)">Scary on Cherry Tickets Are Open</p>
+          <p class="text-sm mt-0.5" style="color: var(--text-muted)">Reserve your free time slot. Walk-ups welcome while spots last.</p>
+        </div>
+        <a href="/tickets/scary-on-cherry" class="btn-accent shrink-0 text-sm whitespace-nowrap">Reserve a Spot</a>
+      </div>
+    )}
+
+    {upcoming.length === 0 && (
+      <div class="card p-8 text-center">
+        <p class="font-semibold mb-1" style="color: var(--text)">No Upcoming Dates Yet</p>
+        <p class="text-sm" style="color: var(--text-muted)">Check back soon. Dates are added as each season approaches.</p>
+        {fbFeedError && (
+          <p class="text-xs mt-3" style="color: var(--text-subtle)">
+            Could not load the live schedule right now. Check our
+            <a href={FB_EVENTS_PAGE} target="_blank" rel="noopener noreferrer" class="text-accent underline">Facebook page</a> for dates.
+          </p>
+        )}
+      </div>
+    )}
+
+    <div class="space-y-10">
+      {Object.entries(byMonth).map(([month, events]) => (
+        <div>
+          <h2 class="text-sm font-bold uppercase tracking-widest mb-4 pb-2 border-b"
+              style="color: var(--accent); border-color: var(--border)">
+            {month}
+          </h2>
+          <div class="space-y-2">
+            {events.map((ev) => (
+              ev.href && ev.source !== 'facebook' ? (
+                <a href={ev.href} class:list={['event-row', ev.cancelled && 'event-cancelled']}>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <p class="font-semibold" style={`color: ${ev.cancelled ? 'var(--text-subtle)' : 'var(--text)'}`}>
+                        {ev.title}
+                      </p>
+                      {ev.source === 'partner' && (
+                        <span class="partner-badge">Special Event</span>
+                      )}
+                    </div>
+                    <p class="text-xs mt-0.5" style="color: var(--text-muted)">
+                      {fmt(ev.date)}{ev.location && ` · ${ev.location}`}
+                    </p>
+                  </div>
+                  {ev.source === 'show' && ticketingSettings.enabled ? (
+                    <span class="event-action-pill" style="color: var(--accent); border-color: var(--accent)">Reserve →</span>
+                  ) : (
+                    <span class="event-action-pill">Details →</span>
+                  )}
+                </a>
+              ) : (
+                <div class:list={['event-row', ev.cancelled && 'event-cancelled']}>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold" style={`color: ${ev.cancelled ? 'var(--text-subtle)' : 'var(--text)'}`}>
+                      {ev.cancelled && (
+                        <span class="cancelled-badge">CANCELLED</span>
+                      )}
+                      {ev.title}
+                    </p>
+                    <p class="text-xs mt-0.5" style="color: var(--text-muted)">{fmt(ev.date)}</p>
+                  </div>
+                  {ev.href && (
+                    <a href={ev.href} target="_blank" rel="noopener noreferrer" class="event-action-pill">
+                      View →
+                    </a>
+                  )}
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.625rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: border-color 150ms;
+    text-decoration: none;
+  }
+  a.event-row:hover { border-color: var(--accent); }
+  .event-cancelled { opacity: 0.6; }
+  .event-action-pill {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.375rem 0.75rem;
+    border-radius: 2rem;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: border-color 150ms, color 150ms;
+  }
+  a.event-row:hover .event-action-pill {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .partner-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 2rem;
+    background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  }
+  .cancelled-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    margin-right: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+</style>

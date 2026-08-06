@@ -1,0 +1,539 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
+import ticketing from '../../content/ticketing/settings.json';
+
+const isTest = import.meta.env.PUBLIC_TEST_MODE === 'true';
+const donationEnabled = ticketing.donationEnabled
+  && !!ticketing.squareApplicationId
+  && !!ticketing.squareLocationId;
+
+function fmtDateServer(d: string) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+  });
+}
+---
+
+<Layout
+  title={`${ticketing.eventName} Tickets`}
+  description={`Reserve your free time slot for ${ticketing.eventName} at 352 N Cherry St, Kenton, Ohio.`}
+>
+
+  <div class="ticket-wrap">
+
+    <div class="ticket-header">
+      <p class="section-label mb-1">Free Admission</p>
+      <h1 class="text-2xl font-extrabold" style="color:var(--text)">{ticketing.eventName}</h1>
+      <p class="text-sm mt-1" style="color:var(--text-muted)">352 N Cherry St · Kenton, OH</p>
+    </div>
+
+    {!ticketing.enabled ? (
+      <div class="card p-10 text-center mx-4">
+        <div class="flex justify-center mb-4" style="color:var(--accent)"><Icon name="calendar" size={40} /></div>
+        <p class="font-bold text-lg mb-2" style="color:var(--text)">Tickets Coming Soon</p>
+        <p class="text-sm" style="color:var(--text-muted)">Reservations open closer to the event. Check back soon.</p>
+        <a href="/shows/scary-on-cherry" class="btn-outline inline-block mt-5 text-sm">Show Details</a>
+      </div>
+    ) : (
+      <div id="app">
+
+        <!-- Progress bar -->
+        <div class="prog-bar" id="prog-bar" aria-hidden="true">
+          <div class="prog active" id="prog-0"></div>
+          <div class="prog" id="prog-1"></div>
+          <div class="prog" id="prog-2"></div>
+          {donationEnabled && <div class="prog" id="prog-3"></div>}
+          <div class="prog" id="prog-final"></div>
+        </div>
+
+        <!-- STEP: Date -->
+        <div class="step" id="step-date">
+          <h2 class="step-title">Choose a Night</h2>
+          <p class="step-sub">Pick the date you'd like to visit.</p>
+          <div class="date-list" id="date-list">
+            {ticketing.showDates.map(d => (
+              <button class="date-btn" data-date={d}>
+                <span class="font-bold text-base" style="color:var(--text)">{fmtDateServer(d)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <!-- STEP: Slot -->
+        <div class="step hidden" id="step-slot">
+          <h2 class="step-title">Pick a Time</h2>
+          <p class="step-sub text-xs" id="slot-date-label"></p>
+          <p class="text-xs mt-1 mb-4" style="color:var(--text-subtle)">Slots are {ticketing.slotDurationMinutes} min. Book right up until start time.</p>
+          <div class="slot-grid" id="slot-grid">
+            <p class="col-span-2 text-center text-sm py-4" style="color:var(--text-muted)">Loading times...</p>
+          </div>
+          <button class="back-btn mt-4" data-target="step-date">Back to dates</button>
+        </div>
+
+        <!-- STEP: Info -->
+        <div class="step hidden" id="step-info">
+          <h2 class="step-title">Your Info</h2>
+          <p class="step-sub">Just your name and email for a confirmation.</p>
+          <div class="field-group">
+            <label class="field">
+              <span class="field-label">Name</span>
+              <input id="f-name" type="text" class="field-input" placeholder="Your name" autocomplete="name" enterkeyhint="next" />
+            </label>
+            <label class="field">
+              <span class="field-label">Email</span>
+              <input id="f-email" type="email" class="field-input" placeholder="you@example.com" autocomplete="email" enterkeyhint="next" inputmode="email" />
+            </label>
+            <label class="field">
+              <span class="field-label">People in your group</span>
+              <select id="f-guests" class="field-input">
+                {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                  <option value={n}>{n} {n === 1 ? 'person' : 'people'}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <p class="text-xs mt-3 mb-1" style="color:var(--text-subtle)">Tickets are free. We send one quick confirmation email.</p>
+          <p class="text-xs text-red-400 hidden mt-1" id="info-err">Please enter your name and a valid email address.</p>
+          <div class="action-row mt-5">
+            <button class="back-btn" data-target="step-slot">Back</button>
+            <button class="btn-accent flex-1" id="info-next">Continue</button>
+          </div>
+        </div>
+
+        <!-- STEP: Donate (conditional) -->
+        {donationEnabled && (
+          <div class="step hidden" id="step-donate">
+            <h2 class="step-title">Optional Donation</h2>
+            <p class="step-sub">Would you like to add a donation to <strong style="color:var(--text)">{ticketing.donationCharity}</strong>?</p>
+            <p class="text-xs mt-1 mb-5" style="color:var(--text-subtle)">{ticketing.donationDisclosure}</p>
+            <div class="donate-grid">
+              {ticketing.donationAmounts.map(amt => (
+                <button class="choice-btn donation-pick" data-cents={amt * 100}>${amt}</button>
+              ))}
+            </div>
+            <button class="btn-outline w-full mt-3 mb-1" id="skip-donate">No thanks</button>
+            <button class="back-btn mt-2" data-target="step-info">Back</button>
+          </div>
+        )}
+
+        <!-- STEP: Pay (conditional) -->
+        {donationEnabled && (
+          <div class="step hidden" id="step-pay">
+            <h2 class="step-title">Donation Payment</h2>
+            <p class="step-sub">Donating <strong style="color:var(--accent)" id="pay-label"></strong> to {ticketing.donationCharity}.</p>
+            <p class="text-xs mt-1 mb-5" style="color:var(--text-subtle)">Your spot is free. Only the donation is charged.</p>
+            <div id="card-container" class="card-field mb-3"></div>
+            <p class="text-xs text-red-400 mb-3 hidden" id="pay-err"></p>
+            <button class="btn-accent w-full mb-3" id="pay-submit">Complete Reservation</button>
+            <button class="back-btn" data-target="step-donate">Back</button>
+          </div>
+        )}
+
+        <!-- STEP: Review -->
+        <div class="step hidden" id="step-review">
+          <h2 class="step-title">Confirm Your Spot</h2>
+          <p class="step-sub">Everything look right?</p>
+          <div class="review-box mt-4" id="review-summary"></div>
+          <p class="text-xs text-red-400 mt-3 hidden" id="review-err"></p>
+          <button class="btn-accent w-full mt-4" id="review-submit">Reserve My Spot</button>
+          <button class="back-btn mt-3" id="review-back">Back</button>
+        </div>
+
+        <!-- SUCCESS -->
+        <div class="step hidden" id="step-success">
+          <div class="flex justify-center mb-3" style="color:var(--accent)"><Icon name="star" size={44} /></div>
+          <h2 class="text-2xl font-bold text-center mb-1" style="color:var(--text)">You're on the list!</h2>
+          <p class="text-center text-sm mb-5" style="color:var(--text-muted)">Save this confirmation code.</p>
+          <div class="conf-box">
+            <p class="text-xs uppercase tracking-widest mb-1" style="color:var(--text-muted)">Confirmation Code</p>
+            <p class="text-4xl font-extrabold tracking-widest" style="color:var(--accent)" id="conf-code"></p>
+          </div>
+          <div class="review-box mt-4" id="success-details"></div>
+          <p class="text-xs text-center mt-5" style="color:var(--text-subtle)">{ticketing.confirmationEmailMessage}</p>
+          <a href="/shows/scary-on-cherry" class="btn-outline block text-center mt-5 text-sm">Back to Show Info</a>
+        </div>
+
+      </div>
+    )}
+  </div>
+
+</Layout>
+
+<script define:vars={{ ticketing, donationEnabled, isTest }}>
+  const state = {
+    date: '', slot: '', name: '', email: '', guests: 1,
+    donationCents: 0, squareCard: null, busy: false,
+  };
+
+  function fmtDate(d) {
+    return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  }
+  function fmtTime(t) {
+    const [h, m] = t.split(':').map(Number);
+    const hr = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${hr}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+  }
+  function todayEastern() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  }
+
+  // Step navigation
+  const PROG_MAP = {
+    'step-date': 0, 'step-slot': 1, 'step-info': 2,
+    ...(donationEnabled ? { 'step-donate': 3, 'step-pay': 3 } : {}),
+    'step-review': donationEnabled ? 4 : 3,
+  };
+
+  function goTo(id) {
+    document.querySelectorAll('.step').forEach(el => el.classList.add('hidden'));
+    document.getElementById(id)?.classList.remove('hidden');
+    const activeIdx = PROG_MAP[id] ?? 99;
+    document.querySelectorAll('.prog').forEach((el, i) => el.classList.toggle('active', i <= activeIdx));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Auto-select today if it's a show date (walk-up flow)
+  const today = todayEastern();
+  if (ticketing.showDates.includes(today)) {
+    state.date = today;
+    document.getElementById('slot-date-label').textContent = fmtDate(today);
+    goTo('step-slot');
+    loadSlots();
+  }
+
+  // Generic back buttons
+  document.querySelectorAll('.back-btn[data-target]').forEach(btn => {
+    btn.addEventListener('click', () => goTo(btn.dataset.target));
+  });
+
+  // Date selection
+  document.querySelectorAll('.date-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.date = btn.dataset.date;
+      document.getElementById('slot-date-label').textContent = fmtDate(state.date);
+      goTo('step-slot');
+      loadSlots();
+    });
+  });
+
+  async function loadSlots() {
+    const grid = document.getElementById('slot-grid');
+    grid.innerHTML = '<p class="col-span-2 text-center text-sm py-4" style="color:var(--text-muted)">Loading times...</p>';
+    try {
+      const res = await fetch(`/api/tickets/availability?date=${state.date}`);
+      if (!res.ok) throw new Error();
+      const slots = await res.json();
+      grid.innerHTML = '';
+      if (!slots.length) {
+        grid.innerHTML = '<p class="col-span-2 text-center text-sm py-4" style="color:var(--text-muted)">No more slots available tonight. See you next time!</p>';
+        return;
+      }
+      for (const s of slots) {
+        const full = s.available === 0;
+        const btn = document.createElement('button');
+        btn.disabled = full;
+        btn.dataset.time = s.time;
+        btn.style.cssText = [
+          'display:flex','flex-direction:column','align-items:center','justify-content:center',
+          'padding:0.875rem 0.5rem','border-radius:0.625rem',
+          'border:1.5px solid var(--border)','background:var(--surface)',
+          'color:var(--text)','width:100%','min-height:64px','gap:0.125rem',
+          'transition:border-color 150ms,background 150ms',
+          full ? 'opacity:0.4;cursor:not-allowed' : 'cursor:pointer',
+        ].join(';');
+        btn.innerHTML = `<span style="font-weight:700">${fmtTime(s.time)}</span><span style="font-size:0.7rem;color:var(--text-subtle)">${full ? 'Full' : s.available + ' open'}</span>`;
+        if (!full) btn.addEventListener('click', () => { state.slot = s.time; goTo('step-info'); });
+        grid.appendChild(btn);
+      }
+    } catch {
+      grid.innerHTML = '<p class="col-span-2 text-center text-sm py-4 text-red-400">Could not load times. Please refresh.</p>';
+    }
+  }
+
+  // Info step
+  document.getElementById('info-next')?.addEventListener('click', () => {
+    const name = document.getElementById('f-name').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const guests = parseInt(document.getElementById('f-guests').value, 10);
+    const errEl = document.getElementById('info-err');
+    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errEl.classList.remove('hidden');
+      return;
+    }
+    errEl.classList.add('hidden');
+    state.name = name; state.email = email; state.guests = guests;
+    if (donationEnabled) {
+      goTo('step-donate');
+    } else {
+      buildReview();
+      goTo('step-review');
+    }
+  });
+
+  // Donation
+  document.querySelectorAll('.donation-pick').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      state.donationCents = parseInt(btn.dataset.cents, 10);
+      document.getElementById('pay-label').textContent = `$${state.donationCents / 100}`;
+      goTo('step-pay');
+      await initSquare();
+    });
+  });
+
+  document.getElementById('skip-donate')?.addEventListener('click', () => {
+    state.donationCents = 0;
+    buildReview();
+    goTo('step-review');
+  });
+
+  // Review back
+  document.getElementById('review-back')?.addEventListener('click', () => {
+    goTo(donationEnabled ? 'step-donate' : 'step-info');
+  });
+
+  // Square card
+  async function initSquare() {
+    if (state.squareCard) return;
+    if (!window.Square) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = isTest
+          ? 'https://sandbox.web.squarecdn.com/v1/square.js'
+          : 'https://web.squarecdn.com/v1/square.js';
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    const payments = window.Square.payments(ticketing.squareApplicationId, ticketing.squareLocationId);
+    state.squareCard = await payments.card({ style: { '.input-container': { borderRadius: '8px' } } });
+    await state.squareCard.attach('#card-container');
+  }
+
+  // Pay
+  document.getElementById('pay-submit')?.addEventListener('click', async () => {
+    if (state.busy) return;
+    const errEl = document.getElementById('pay-err');
+    errEl.classList.add('hidden');
+    if (!state.squareCard) {
+      errEl.textContent = 'Payment form not ready. Please refresh.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    setBusy('pay-submit', true, 'Processing...');
+    try {
+      const result = await state.squareCard.tokenize();
+      if (result.status !== 'OK') {
+        errEl.textContent = result.errors?.[0]?.message ?? 'Card error. Please check your details.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      await submitReservation(result.token, errEl);
+    } finally {
+      setBusy('pay-submit', false, 'Complete Reservation');
+    }
+  });
+
+  // Review submit
+  document.getElementById('review-submit')?.addEventListener('click', async () => {
+    if (state.busy) return;
+    const errEl = document.getElementById('review-err');
+    errEl.classList.add('hidden');
+    setBusy('review-submit', true, 'Reserving...');
+    try {
+      await submitReservation(null, errEl);
+    } finally {
+      setBusy('review-submit', false, 'Reserve My Spot');
+    }
+  });
+
+  async function submitReservation(squareToken, errEl) {
+    state.busy = true;
+    try {
+      const res = await fetch('/api/tickets/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: state.date, slotTime: state.slot,
+          name: state.name, email: state.email, guests: state.guests,
+          donationCents: state.donationCents, squareToken,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        errEl.textContent = data.error ?? 'Something went wrong. Please try again.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      showSuccess(data.confirmationCode);
+    } catch {
+      errEl.textContent = 'Network error. Please check your connection and try again.';
+      errEl.classList.remove('hidden');
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  function setBusy(id, busy, label) {
+    state.busy = busy;
+    const btn = document.getElementById(id);
+    if (btn) { btn.disabled = busy; btn.textContent = label; }
+  }
+
+  function buildReview() {
+    document.getElementById('review-summary').innerHTML = `
+      <div class="rv"><span>Event</span><strong>${ticketing.eventName}</strong></div>
+      <div class="rv"><span>Date</span><strong>${fmtDate(state.date)}</strong></div>
+      <div class="rv"><span>Time</span><strong>${fmtTime(state.slot)}</strong></div>
+      <div class="rv"><span>Group</span><strong>${state.guests} ${state.guests === 1 ? 'person' : 'people'}</strong></div>
+      <div class="rv"><span>Name</span><strong>${state.name}</strong></div>
+      <div class="rv"><span>Email</span><strong style="word-break:break-all">${state.email}</strong></div>
+    `;
+  }
+
+  function showSuccess(code) {
+    document.getElementById('conf-code').textContent = code;
+    document.getElementById('success-details').innerHTML = `
+      <div class="rv"><span>Event</span><strong>${ticketing.eventName}</strong></div>
+      <div class="rv"><span>Date</span><strong>${fmtDate(state.date)}</strong></div>
+      <div class="rv"><span>Time</span><strong>${fmtTime(state.slot)}</strong></div>
+      <div class="rv"><span>Group</span><strong>${state.guests} ${state.guests === 1 ? 'person' : 'people'}</strong></div>
+      ${state.donationCents > 0 ? `<div class="rv"><span>Donation</span><strong>$${state.donationCents / 100} to ${ticketing.donationCharity}</strong></div>` : ''}
+    `;
+    goTo('step-success');
+  }
+</script>
+
+<style>
+  .ticket-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding-bottom: 3rem;
+  }
+  .ticket-header {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+  }
+
+  .prog-bar {
+    display: flex;
+    gap: 0.375rem;
+    padding: 0 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .prog {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--border); transition: background 250ms;
+  }
+  .prog.active { background: var(--accent); }
+
+  .step {
+    padding: 0 1rem;
+  }
+  .step-title {
+    font-size: 1.25rem; font-weight: 700;
+    color: var(--text); margin-bottom: 0.25rem;
+  }
+  .step-sub {
+    font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem;
+  }
+
+  /* Date list */
+  .date-list {
+    display: flex; flex-direction: column; gap: 0.625rem;
+  }
+  .date-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.125rem; border-radius: 0.75rem;
+    border: 1.5px solid var(--border); background: var(--surface);
+    cursor: pointer; width: 100%; text-align: left;
+    transition: border-color 150ms, background 150ms;
+    min-height: 56px;
+  }
+  .date-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  }
+  .date-btn::after {
+    content: '›';
+    font-size: 1.25rem;
+    color: var(--text-subtle);
+  }
+
+  /* Slot grid */
+  .slot-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+  }
+
+  /* Fields */
+  .field-group { display: flex; flex-direction: column; gap: 1rem; }
+  .field { display: block; }
+  .field-label {
+    display: block; font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-muted); margin-bottom: 0.375rem;
+  }
+  .field-input {
+    width: 100%; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 0.625rem;
+    padding: 0.75rem 1rem; color: var(--text);
+    font-size: 1rem; transition: border-color 150ms; outline: none;
+    min-height: 52px;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  .field-input::placeholder { color: var(--text-subtle); }
+  select.field-input { cursor: pointer; }
+
+  /* Donation */
+  .donate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+  .choice-btn {
+    padding: 1rem; border-radius: 0.625rem;
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 1.125rem; font-weight: 700;
+    cursor: pointer; min-height: 56px; transition: border-color 150ms, background 150ms;
+  }
+  .choice-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  }
+
+  /* Square card container */
+  .card-field {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 0.625rem; padding: 1rem; min-height: 90px;
+  }
+
+  /* Review box */
+  .review-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 0.75rem; padding: 1rem;
+    display: flex; flex-direction: column; gap: 0.625rem;
+  }
+  .rv {
+    display: flex; justify-content: space-between; gap: 1rem;
+    font-size: 0.875rem; color: var(--text-muted);
+  }
+  .rv strong { color: var(--text); text-align: right; }
+
+  /* Confirm box */
+  .conf-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 0.75rem; padding: 1.5rem;
+    text-align: center;
+  }
+
+  /* Back button */
+  .back-btn {
+    display: block; width: 100%; padding: 0.75rem 1rem;
+    border-radius: 0.625rem; border: 1.5px solid var(--border);
+    background: transparent; color: var(--text-muted);
+    font-size: 0.875rem; font-weight: 600; cursor: pointer;
+    min-height: 48px; transition: border-color 150ms;
+  }
+  .back-btn:hover { border-color: var(--accent); }
+
+  /* Action row */
+  .action-row { display: flex; gap: 0.625rem; }
+  .action-row .back-btn { flex: 0 0 auto; width: auto; padding: 0.75rem 1.25rem; }
+</style>

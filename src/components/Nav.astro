@@ -1,0 +1,212 @@
+---
+interface Props {
+  season: string;
+  showActive: boolean;
+}
+const { season, showActive } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const seasonLabel = season === 'halloween' ? 'Scary on Cherry' : season === 'christmas' ? 'Merry on Cherry' : null;
+---
+
+<!-- Tune-in banner -->
+<div class="tune-bar">
+  <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm flex-wrap">
+    {showActive ? (
+      <span class="flex items-center gap-2">
+        <span class="live-dot"></span>
+        <strong class="text-accent">ON AIR NOW</strong>
+        <span class="text-muted">· Tune to</span>
+        <strong>106.9 FM</strong>
+        <span class="text-muted">or</span>
+        <a href="/listen-now" class="text-accent underline underline-offset-2 hover:opacity-80">listen online</a>
+      </span>
+    ) : (
+      <span class="flex items-center gap-2 text-muted">
+        {seasonLabel ? (
+          <>
+            <span class="text-accent font-semibold">{seasonLabel}</span>
+            <span>· When the show runs, tune to</span>
+          </>
+        ) : (
+          <span>During our shows, tune to</span>
+        )}
+        <strong class="text-[var(--text)]">106.9 FM</strong>
+        <span>or</span>
+        <a href="/listen-now" class="underline underline-offset-2 hover:text-accent transition-colors">listen online</a>
+      </span>
+    )}
+  </div>
+</div>
+
+<header class="sticky top-0 z-50">
+  <nav class="nav-bar">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
+
+      <!-- Logo -->
+      <a href="/" class="flex items-center gap-2.5 font-bold text-lg shrink-0 hover:opacity-80 transition-opacity" style="color: var(--text)">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <circle cx="14" cy="14" r="13" fill="var(--accent)" opacity="0.15"/>
+          <path d="M14 4 L17 11 L24 11 L18.5 15.5 L20.5 22 L14 18 L7.5 22 L9.5 15.5 L4 11 L11 11 Z" fill="var(--accent)"/>
+        </svg>
+        <span>Draper <span style="color: var(--accent)">Light Show</span></span>
+      </a>
+
+      <!-- Desktop nav -->
+      <ul class="hidden md:flex items-center gap-1 text-sm font-medium" style="color: var(--text-muted)">
+        <li>
+          <a href="/" class:list={['nav-link', currentPath === '/' && 'nav-link-active']}>Home</a>
+        </li>
+        <li class="relative group">
+          <button class="nav-link flex items-center gap-1">
+            Shows
+            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <ul class="dropdown">
+            <li><a href="/shows/scary-on-cherry" class="dropdown-item">Scary on Cherry</a></li>
+            <li><a href="/shows/merry-on-cherry" class="dropdown-item">Merry on Cherry</a></li>
+            <li><a href="/shows/libertylights-july-4th" class="dropdown-item">LibertyLights</a></li>
+            <li><a href="/shows/may-the-4th-be-with-you" class="dropdown-item">May the 4th</a></li>
+            <li><a href="/shows/memorial-day" class="dropdown-item">Memorial Day</a></li>
+            <li><a href="/shows/love-valentines-day" class="dropdown-item">Valentine's Day</a></li>
+          </ul>
+        </li>
+        <li><a href="/event-schedule" class:list={['nav-link', currentPath === '/event-schedule' && 'nav-link-active']}>Schedule</a></li>
+        <li><a href="/gallery" class:list={['nav-link', currentPath.startsWith('/gallery') && 'nav-link-active']}>Gallery</a></li>
+        <li><a href="/now-playing" class:list={['nav-link', currentPath === '/now-playing' && 'nav-link-active']}>Now Playing</a></li>
+        <li><a href="/donate" class:list={['nav-link', currentPath === '/donate' && 'nav-link-active']}>Donate</a></li>
+        <li><a href="/contact" class:list={['nav-link', currentPath === '/contact' && 'nav-link-active']}>Contact</a></li>
+      </ul>
+
+      <!-- Mobile toggle -->
+      <button id="nav-toggle" class="md:hidden p-2 rounded-lg transition-colors" style="color: var(--text-muted)" aria-label="Toggle menu" aria-expanded="false">
+        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden border-t animate-slide-down" style="border-color: var(--border)">
+      <ul class="px-4 py-3 space-y-1 text-sm font-medium">
+        <li><a href="/" class="mobile-link">Home</a></li>
+        <li class="pl-3 border-l-2 space-y-1 my-2" style="border-color: var(--accent)">
+          <p class="section-label mb-1">Shows</p>
+          <a href="/shows/scary-on-cherry" class="mobile-link block">Scary on Cherry</a>
+          <a href="/shows/merry-on-cherry" class="mobile-link block">Merry on Cherry</a>
+          <a href="/shows/libertylights-july-4th" class="mobile-link block">LibertyLights</a>
+          <a href="/shows/may-the-4th-be-with-you" class="mobile-link block">May the 4th</a>
+          <a href="/shows/memorial-day" class="mobile-link block">Memorial Day</a>
+          <a href="/shows/love-valentines-day" class="mobile-link block">Valentine's Day</a>
+        </li>
+        <li><a href="/event-schedule" class="mobile-link">Schedule</a></li>
+        <li><a href="/gallery" class="mobile-link">Gallery</a></li>
+        <li><a href="/now-playing" class="mobile-link">Now Playing</a></li>
+        <li><a href="/donate" class="mobile-link">Donate</a></li>
+        <li><a href="/contact" class="mobile-link">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+</header>
+
+<style>
+  .tune-bar {
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8125rem;
+    color: var(--text);
+  }
+
+  .nav-bar {
+    background-color: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-link {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: color 150ms, background-color 150ms;
+    color: var(--text-muted);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    font-weight: inherit;
+  }
+  .nav-link:hover, .nav-link:focus {
+    color: var(--text);
+    background-color: var(--surface);
+  }
+  .nav-link-active {
+    color: var(--accent) !important;
+    background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 0.375rem;
+    min-width: 220px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    display: none;
+    z-index: 100;
+  }
+  .group:hover .dropdown,
+  .group:focus-within .dropdown {
+    display: block;
+  }
+
+  .dropdown-item {
+    display: block;
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 150ms, background-color 150ms;
+    white-space: nowrap;
+  }
+  .dropdown-item:hover {
+    color: var(--text);
+    background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  .mobile-link {
+    display: block;
+    padding: 0.5rem 0.5rem;
+    border-radius: 0.5rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 150ms, background-color 150ms;
+  }
+  .mobile-link:hover {
+    color: var(--text);
+    background-color: var(--surface);
+  }
+</style>
+
+<script>
+  const toggle = document.getElementById('nav-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const iconOpen = document.getElementById('icon-open');
+  const iconClose = document.getElementById('icon-close');
+
+  toggle?.addEventListener('click', () => {
+    const isHidden = menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden');
+    iconOpen?.classList.toggle('hidden');
+    iconClose?.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', String(isHidden));
+  });
+</script>

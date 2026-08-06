@@ -1,0 +1,27 @@
+name = "draper-family-light-show"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Run: npx wrangler d1 create draper-light-show-db
+# Then replace the database_id below with the ID from that command output.
+[[d1_databases]]
+binding = "DB"
+database_name = "draper-light-show-db"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+# Run: npx wrangler d1 create draper-light-show-db-preview
+# Then replace the database_id below.
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "draper-light-show-db-preview"
+database_id = "REPLACE_WITH_PREVIEW_DATABASE_ID"
+
+# ─── Production (main branch) ─────────────────────────────────────────────────
+[vars]
+PUBLIC_TEST_MODE = "false"
+SQUARE_ENVIRONMENT = "production"
+
+# ─── Preview / Staging (all other branches) ───────────────────────────────────
+[env.preview.vars]
+PUBLIC_TEST_MODE = "true"
+SQUARE_ENVIRONMENT = "sandbox"

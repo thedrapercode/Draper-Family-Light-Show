@@ -1,0 +1,193 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Icon from '../../components/Icon.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const albums = await getCollection('albums');
+  return albums.map((album) => ({
+    params: { album: album.id },
+    props: { album },
+  }));
+}
+
+const { album } = Astro.props;
+const photos: string[] = album.data.photos ?? [];
+---
+<Layout title={album.data.title} description={`Photos from ${album.data.title}`}>
+
+  <section class="max-w-6xl mx-auto px-4 py-14">
+    <div class="mb-8">
+      <a href="/gallery" class="text-sm font-medium hover:opacity-80 transition-opacity" style="color: var(--accent)">← All Albums</a>
+    </div>
+
+    <p class="section-label mb-2">{album.data.year} · {album.data.showSlug.replace(/-/g, ' ')}</p>
+    <h1 class="text-3xl font-extrabold mb-2" style="color: var(--text)">{album.data.title}</h1>
+    {album.data.description && (
+      <p class="text-sm mb-8" style="color: var(--text-muted)">{album.data.description}</p>
+    )}
+
+    {photos.length === 0 ? (
+      <div class="card p-10 text-center">
+        <div class="flex justify-center mb-3" style="color: var(--text-subtle)"><Icon name="camera" size={36} /></div>
+        <p class="text-sm" style="color: var(--text-muted)">No photos in this album yet.</p>
+      </div>
+    ) : (
+      <div class="photo-grid" id="gallery">
+        {photos.map((src, i) => (
+          <button
+            class="photo-item"
+            data-index={i}
+            aria-label={`Open photo ${i + 1}`}
+            onclick={`openLightbox(${i})`}
+          >
+            <img
+              src={src}
+              alt={`${album.data.title} photo ${i + 1}`}
+              loading={i < 6 ? 'eager' : 'lazy'}
+              class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            />
+          </button>
+        ))}
+      </div>
+    )}
+  </section>
+
+  <!-- Lightbox -->
+  {photos.length > 0 && (
+    <div id="lightbox" class="lightbox" aria-hidden="true" onclick="closeLightbox()">
+      <button class="lb-close" onclick="closeLightbox()" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <button class="lb-prev" onclick="event.stopPropagation(); prevPhoto()" aria-label="Previous">‹</button>
+      <button class="lb-next" onclick="event.stopPropagation(); nextPhoto()" aria-label="Next">›</button>
+      <img id="lb-img" src="" alt="" class="lb-image" onclick="event.stopPropagation()" />
+      <p id="lb-counter" class="lb-counter"></p>
+    </div>
+  )}
+
+</Layout>
+
+<style>
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .photo-item {
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    padding: 0;
+    display: block;
+    transition: border-color 150ms;
+  }
+  .photo-item:hover { border-color: var(--accent); }
+
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .lightbox.open { display: flex; }
+
+  .lb-image {
+    max-height: 85vh;
+    max-width: 90vw;
+    object-fit: contain;
+    border-radius: 0.5rem;
+  }
+
+  .lb-close {
+    position: absolute;
+    top: 1rem; right: 1.25rem;
+    background: none; border: none;
+    color: #fff; font-size: 1.5rem;
+    cursor: pointer; opacity: 0.8;
+    padding: 0.5rem;
+  }
+  .lb-close:hover { opacity: 1; }
+
+  .lb-prev, .lb-next {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-size: 2rem;
+    cursor: pointer; border-radius: 50%;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 150ms;
+    padding: 0;
+  }
+  .lb-prev { left: 1rem; }
+  .lb-next { right: 1rem; }
+  .lb-prev:hover, .lb-next:hover { background: rgba(255,255,255,0.2); }
+
+  .lb-counter {
+    position: absolute;
+    bottom: 1.25rem; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8125rem;
+  }
+</style>
+
+<script define:vars={{ photos }}>
+  let current = 0;
+
+  function openLightbox(index) {
+    current = index;
+    const lb = document.getElementById('lightbox');
+    lb?.classList.add('open');
+    lb?.setAttribute('aria-hidden', 'false');
+    updateLightbox();
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    lb?.classList.remove('open');
+    lb?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function updateLightbox() {
+    const img = document.getElementById('lb-img');
+    const counter = document.getElementById('lb-counter');
+    if (img) { img.src = photos[current]; img.alt = `Photo ${current + 1}`; }
+    if (counter) counter.textContent = `${current + 1} / ${photos.length}`;
+  }
+
+  function prevPhoto() {
+    current = (current - 1 + photos.length) % photos.length;
+    updateLightbox();
+  }
+
+  function nextPhoto() {
+    current = (current + 1) % photos.length;
+    updateLightbox();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const lb = document.getElementById('lightbox');
+    if (!lb?.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') prevPhoto();
+    if (e.key === 'ArrowRight') nextPhoto();
+  });
+
+  // expose globally for inline onclick
+  window.openLightbox = openLightbox;
+  window.closeLightbox = closeLightbox;
+  window.prevPhoto = prevPhoto;
+  window.nextPhoto = nextPhoto;
+</script>

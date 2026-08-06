@@ -1,0 +1,342 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  showActive: boolean;
+  nextEventName: string;
+  nextEventDate: string;
+  nowPlayingImage: string;
+  season: string;
+}
+const { showActive, nextEventName, nextEventDate, nowPlayingImage, season } = Astro.props;
+
+const seasonIcon = season === 'halloween' ? 'zap' : season === 'christmas' ? 'gift' : 'star';
+const returnDateFormatted = nextEventDate
+  ? new Date(nextEventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  : '';
+---
+
+<div class="now-playing-container">
+  {showActive ? (
+    <div class="live-wrapper">
+      <div class="live-header">
+
+        <div class="flex items-center gap-2">
+          <span class="live-dot"></span>
+          <span class="section-label">On Air Now</span>
+        </div>
+        <p class="text-xs mt-0.5" style="color: var(--text-subtle)">
+          Tune your car radio to <strong style="color: var(--accent)">106.9 FM</strong>
+        </p>
+      </div>
+
+      <div class="media-grid">
+        <div class="house-image-wrap">
+          {nowPlayingImage ? (
+            <img
+              src={nowPlayingImage}
+              alt="Draper Family Light Show house"
+              class="house-img"
+            />
+          ) : (
+            <div class="house-placeholder">
+              <Icon name={seasonIcon} size={40} />
+              <p class="text-xs mt-2 text-muted">Add a house photo in the admin</p>
+            </div>
+          )}
+          <div class="house-badge">
+            <span class="live-dot" style="width:6px;height:6px;"></span>
+            LIVE
+          </div>
+        </div>
+
+        <div class="rf-embed-wrap">
+          <p class="section-label mb-2">Now Playing</p>
+          <div class="rf-frame-container">
+            <iframe
+              src="https://draperlightshow.remotefalcon.com/remote-falcon"
+              title="Now Playing at Draper Family Light Show"
+              width="100%"
+              height="220"
+              style="border:none;overflow:hidden;"
+              allow="geolocation"
+              loading="lazy"
+              class="rf-iframe"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="audio-section">
+        <p class="section-label mb-3 flex items-center gap-1.5"><Icon name="music" size={14} />Listen Live Online</p>
+        <div class="pulsemesh-wrap">
+          <iframe
+            id="webplayer"
+            title="Draper Family Light Show Web Player"
+            width="100%"
+            height="220"
+            style="border:none;overflow:hidden;"
+            allow="geolocation"
+            src="https://player.pulsemesh.io/d/VPQ8"
+            loading="lazy"
+          ></iframe>
+        </div>
+        <p class="text-xs mt-2 text-center text-muted">Can't listen online? Tune to <strong style="color: var(--text)">106.9 FM</strong> at the show.</p>
+      </div>
+    </div>
+  ) : (
+    <div class="offseason-wrapper">
+      <div class="offseason-icon" aria-hidden="true">
+        <Icon name={seasonIcon} size={48} />
+      </div>
+      <p class="section-label mb-1">See You Soon</p>
+      <h2 class="offseason-title">
+        {nextEventName || 'The Show'} is Coming
+      </h2>
+      {returnDateFormatted && (
+        <p class="offseason-date">
+          Opens <strong style="color: var(--accent)">{returnDateFormatted}</strong>
+        </p>
+      )}
+
+      <div class="countdown-grid" id="countdown" aria-live="polite">
+        <div class="countdown-unit">
+          <span class="countdown-val" id="cd-days">--</span>
+          <span class="countdown-label">Days</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-val" id="cd-hours">--</span>
+          <span class="countdown-label">Hours</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-val" id="cd-mins">--</span>
+          <span class="countdown-label">Mins</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-val" id="cd-secs">--</span>
+          <span class="countdown-label">Secs</span>
+        </div>
+      </div>
+
+      <div class="offseason-actions">
+        <a href="/event-schedule" class="btn-accent">View All Events</a>
+        <a href="/gallery" class="btn-outline">Past Shows</a>
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .now-playing-container {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+
+  /* LIVE MODE */
+  .live-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .live-header {
+    padding: 1rem 1.25rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    background-color: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .media-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  @media (min-width: 640px) {
+    .media-grid {
+      grid-template-columns: 200px 1fr;
+    }
+  }
+
+  .house-image-wrap {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--surface-2);
+    aspect-ratio: 4/3;
+  }
+  @media (min-width: 640px) {
+    .house-image-wrap {
+      aspect-ratio: auto;
+    }
+  }
+
+  .house-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .house-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 140px;
+    color: var(--text-subtle);
+  }
+
+  .house-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.05em;
+  }
+
+  .rf-embed-wrap {
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border);
+  }
+
+  .rf-frame-container {
+    background: var(--surface-2);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    flex: 1;
+  }
+
+  .rf-iframe {
+    display: block;
+    width: 100%;
+    background: transparent;
+  }
+
+  .audio-section {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .pulsemesh-wrap {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  /* OFF-SEASON MODE */
+  .offseason-wrapper {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .offseason-icon {
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .offseason-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.15;
+  }
+
+  .offseason-date {
+    font-size: 0.9375rem;
+    color: var(--text-muted);
+    margin-top: -0.25rem;
+  }
+
+  .countdown-grid {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .countdown-unit {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+    padding: 0.75rem 1.125rem;
+    min-width: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .countdown-val {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .countdown-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-subtle);
+    margin-top: 0.25rem;
+  }
+
+  .offseason-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
+</style>
+
+<script define:vars={{ nextEventDate, showActive }}>
+  if (!showActive && nextEventDate) {
+    const target = new Date(nextEventDate + 'T20:00:00').getTime();
+
+    function updateCountdown() {
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) {
+        document.getElementById('countdown')?.remove();
+        return;
+      }
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(val).padStart(2, '0');
+      };
+      set('cd-days', d);
+      set('cd-hours', h);
+      set('cd-mins', m);
+      set('cd-secs', s);
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  }
+</script>
