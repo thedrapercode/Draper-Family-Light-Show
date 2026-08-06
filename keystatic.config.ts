@@ -6,7 +6,7 @@ export default config({
         kind: 'github',
         repo: {
           owner: 'thedrapercode',
-          name: 'draper-family-light-show',
+          name: 'Draper-Family-Light-Show',
         },
       }
     : { kind: 'local' },
