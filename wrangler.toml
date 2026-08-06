@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "draper-light-show-db"
-database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+database_id = "a9714630-42e2-4abb-8cae-c339c06fb4c4"
 
 # Run: npx wrangler d1 create draper-light-show-db-preview
 # Then replace the database_id below.
