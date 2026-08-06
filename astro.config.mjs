@@ -9,6 +9,8 @@ export default defineConfig({
   output: 'static',
   adapter: cloudflare({
     platformProxy: { enabled: false },
+    session: false,
+    imageService: 'passthrough',
   }),
   integrations: [react(), keystatic()],
   vite: {
