@@ -41,4 +41,23 @@ const albums = defineCollection({
   }),
 });
 
-export const collections = { shows, events, albums };
+const partnerEvents = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/partner-events' }),
+  schema: z.object({
+    title: z.string(),
+    date: z.string(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    location: z.string().optional(),
+    externalTicketUrl: z.string().optional(),
+    ticketLabel: z.string().default('Get Tickets'),
+    inviteOnly: z.boolean().default(false),
+    partnerOrgs: z.array(z.string()).default([]),
+    charity: z.string().optional(),
+    charityUrl: z.string().optional(),
+    heroImage: z.string().optional(),
+    featured: z.boolean().default(false),
+  }),
+});
+
+export const collections = { shows, events, albums, partnerEvents };
