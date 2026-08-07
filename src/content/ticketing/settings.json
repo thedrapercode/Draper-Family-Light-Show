@@ -13,8 +13,8 @@
     "2026-10-24",
     "2026-10-30"
   ],
-  "slotStartTime": "18:00",
-  "slotEndTime": "21:00",
+  "slotStartTime": "20:00",
+  "slotEndTime": "23:00",
   "slotDurationMinutes": 15,
   "slotCapacity": 20,
   "donationEnabled": true,
