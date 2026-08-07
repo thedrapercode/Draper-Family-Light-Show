@@ -3,6 +3,7 @@
   "eventName": "Scary on Cherry",
   "eventDescription": "A free haunted experience at 352 N Cherry St, Kenton, Ohio. Reserve your time slot. No cost, just scares.",
   "showDates": [
+    "2026-10-02",
     "2026-10-03",
     "2026-10-09",
     "2026-10-10",
@@ -19,9 +20,11 @@
   "donationEnabled": true,
   "donationCharity": "United Way of Hardin County",
   "donationDisclosure": "Donations are collected by Draper Family Light Show and given in full to United Way of Hardin County.",
-  "donationAmounts": [5, 10, 20],
-  "squareApplicationId": "",
-  "squareLocationId": "",
+  "donationAmounts": [
+    5,
+    10,
+    20
+  ],
   "confirmationEmailSubject": "Your Scary on Cherry tickets are confirmed!",
   "confirmationEmailMessage": "Park on the street and enter through the front yard. We can't wait to scare you!"
 }
