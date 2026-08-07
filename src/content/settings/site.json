@@ -1,6 +1,6 @@
 {
   "season": "halloween",
-  "showActive": false,
+  "showActive": true,
   "nextEventName": "Scary on Cherry",
   "nextEventDate": "2026-10-02"
 }
