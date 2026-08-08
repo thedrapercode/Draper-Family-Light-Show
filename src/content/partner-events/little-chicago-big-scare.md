@@ -1,19 +1,17 @@
 ---
 title: Little Chicago Big Scare
-date: "2026-10-31"
-startTime: "6:00 PM"
-endTime: "10:00 PM"
-location: "Downtown Kenton, Ohio"
-externalTicketUrl: ""
-ticketLabel: "Get Tickets on Eventbrite"
+date: 2026-10-31
+startTime: 6:00 PM
+endTime: 10:00 PM
+location: Downtown Kenton, Ohio
+ticketLabel: Get Tickets on Eventbrite
 inviteOnly: false
 partnerOrgs:
-  - "City of Kenton"
-charity: "United Way of Hardin County"
-charityUrl: "https://unitedwayhardin.org"
+  - Revitalize Kenton
+charity: United Way of Hardin County
+charityUrl: https://unitedwayhardin.org
 featured: false
 ---
-
 Halloween Night. Three Haunted Stops.
 
 One ticket gets you through three haunted destinations across Kenton, Ohio, plus five checkpoints in between offering frights, treats, and ghouls.
