@@ -1,7 +1,7 @@
 import { config, collection, singleton, fields } from '@keystatic/core';
 
 export default config({
-  storage: process.env.KEYSTATIC_GITHUB_CLIENT_ID
+  storage: import.meta.env.PROD
     ? {
         kind: 'github',
         repo: {
@@ -84,13 +84,30 @@ export default config({
             itemLabel: () => 'Amount',
           }
         ),
-        squareApplicationId: fields.text({
-          label: 'Square Application ID',
-          description: 'Found in your Square Developer dashboard. Safe to store here.',
+        squareMode: fields.select({
+          label: 'Payment Mode',
+          description: 'Switch between sandbox (test payments) and production (real payments). Rebuild the site after changing.',
+          options: [
+            { label: 'Sandbox — test payments only', value: 'sandbox' },
+            { label: 'Production — real payments', value: 'production' },
+          ],
+          defaultValue: 'sandbox',
         }),
-        squareLocationId: fields.text({
-          label: 'Square Location ID',
-          description: 'Found in your Square Developer dashboard. Safe to store here.',
+        squareSandboxAppId: fields.text({
+          label: 'Sandbox Application ID',
+          description: 'From developer.squareup.com → your app → Sandbox tab → Credentials. Starts with sandbox-sq0idb-',
+        }),
+        squareSandboxLocationId: fields.text({
+          label: 'Sandbox Location ID',
+          description: 'From developer.squareup.com → your app → Sandbox tab → Locations.',
+        }),
+        squareProductionAppId: fields.text({
+          label: 'Production Application ID',
+          description: 'From developer.squareup.com → your app → Production tab → Credentials. Starts with sq0idb-',
+        }),
+        squareProductionLocationId: fields.text({
+          label: 'Production Location ID',
+          description: 'From developer.squareup.com → your app → Production tab → Locations.',
         }),
         confirmationEmailSubject: fields.text({
           label: 'Confirmation Email Subject',
@@ -245,6 +262,66 @@ export default config({
           }),
           { label: 'Photos', itemLabel: () => 'Photo' }
         ),
+      },
+    }),
+
+    videos: collection({
+      label: 'Videos',
+      path: 'src/content/videos/*',
+      format: { contentField: 'body' },
+      slugField: 'videoTitle',
+      schema: {
+        videoTitle: fields.slug({ name: { label: 'Video Title', description: 'e.g. "Scary on Cherry 2026 Highlights"' } }),
+        showSlug: fields.select({
+          label: 'Show',
+          description: 'Which show does this video belong to?',
+          options: [
+            { label: 'Scary on Cherry', value: 'scary-on-cherry' },
+            { label: 'Merry on Cherry', value: 'merry-on-cherry' },
+            { label: 'LibertyLights (July 4th)', value: 'libertylights-july-4th' },
+            { label: 'May the 4th Be With You', value: 'may-the-4th-be-with-you' },
+            { label: 'Memorial Day', value: 'memorial-day' },
+            { label: "Valentine's Day", value: 'love-valentines-day' },
+          ],
+          defaultValue: 'scary-on-cherry',
+        }),
+        platform: fields.select({
+          label: 'Platform',
+          options: [
+            { label: 'YouTube', value: 'youtube' },
+            { label: 'TikTok', value: 'tiktok' },
+          ],
+          defaultValue: 'youtube',
+        }),
+        url: fields.url({ label: 'Video URL', description: 'Full URL e.g. https://www.youtube.com/watch?v=...' }),
+        body: fields.markdoc({ label: 'Notes (optional)', extension: 'md' }),
+      },
+    }),
+
+    press: collection({
+      label: 'Press & News',
+      path: 'src/content/press/*',
+      format: { contentField: 'body' },
+      slugField: 'headline',
+      schema: {
+        headline: fields.slug({ name: { label: 'Headline', description: 'Article headline or title.' } }),
+        showSlug: fields.select({
+          label: 'Show',
+          description: 'Which show does this article cover?',
+          options: [
+            { label: 'Scary on Cherry', value: 'scary-on-cherry' },
+            { label: 'Merry on Cherry', value: 'merry-on-cherry' },
+            { label: 'LibertyLights (July 4th)', value: 'libertylights-july-4th' },
+            { label: 'May the 4th Be With You', value: 'may-the-4th-be-with-you' },
+            { label: 'Memorial Day', value: 'memorial-day' },
+            { label: "Valentine's Day", value: 'love-valentines-day' },
+          ],
+          defaultValue: 'scary-on-cherry',
+        }),
+        publication: fields.text({ label: 'Publication', description: 'e.g. Hardin County Tribune' }),
+        url: fields.url({ label: 'Article URL' }),
+        date: fields.text({ label: 'Date', description: 'e.g. October 15, 2026' }),
+        body: fields.markdoc({ label: 'Notes (optional)', extension: 'md' }),
       },
     }),
   },

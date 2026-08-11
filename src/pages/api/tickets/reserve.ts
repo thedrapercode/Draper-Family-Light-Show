@@ -169,15 +169,18 @@ export const POST: APIRoute = async ({ request }) => {
     let squarePaymentId: string | null = null;
 
     if (Number(donationCents) > 0 && squareToken) {
-      const isTest = import.meta.env.PUBLIC_TEST_MODE === 'true';
+      const isTest = ticketing.squareMode === 'sandbox';
       const squareBase = isTest
         ? 'https://connect.squareupsandbox.com'
         : 'https://connect.squareup.com';
+      const accessToken = isTest
+        ? import.meta.env.SQUARE_ACCESS_TOKEN_SANDBOX
+        : import.meta.env.SQUARE_ACCESS_TOKEN_PRODUCTION;
 
       const payRes = await fetch(`${squareBase}/v2/payments`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${import.meta.env.SQUARE_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'Square-Version': '2024-01-18',
         },

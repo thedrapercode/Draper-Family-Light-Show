@@ -3,10 +3,9 @@ import Layout from '../../layouts/Layout.astro';
 import Icon from '../../components/Icon.astro';
 import ticketing from '../../content/ticketing/settings.json';
 
-const isTest = import.meta.env.PUBLIC_TEST_MODE === 'true';
-// Env vars take priority over settings.json so you can switch sandbox/production in .env
-const squareAppId = import.meta.env.PUBLIC_SQUARE_APP_ID || ticketing.squareApplicationId || '';
-const squareLocId = import.meta.env.PUBLIC_SQUARE_LOCATION_ID || ticketing.squareLocationId || '';
+const isTest = ticketing.squareMode === 'sandbox';
+const squareAppId = isTest ? ticketing.squareSandboxAppId : ticketing.squareProductionAppId;
+const squareLocId = isTest ? ticketing.squareSandboxLocationId : ticketing.squareProductionLocationId;
 const donationEnabled = ticketing.donationEnabled && !!squareAppId && !!squareLocId;
 
 function fmtDateServer(d: string) {
@@ -161,7 +160,7 @@ function fmtDateServer(d: string) {
 
 </Layout>
 
-<script define:vars={{ ticketing, donationEnabled, isTest, squareAppId, squareLocId }}>
+<script is:inline define:vars={{ ticketing, donationEnabled, isTest, squareAppId, squareLocId }}>
   const state = {
     date: '', slot: '', name: '', email: '', guests: 1,
     donationCents: 0, squareCard: null, busy: false,
