@@ -1,6 +1,6 @@
 ---
 title: Little Chicago Big Scare
-date: 2026-10-31
+date: "2026-10-31"
 startTime: 6:00 PM
 endTime: 10:00 PM
 location: Downtown Kenton, Ohio

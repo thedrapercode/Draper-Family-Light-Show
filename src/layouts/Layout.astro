@@ -4,6 +4,7 @@ import Footer from '../components/Footer.astro';
 import AnnouncementBanner from '../components/AnnouncementBanner.astro';
 import '../styles/global.css';
 import rawSettings from '../content/settings/site.json';
+import { getCollection } from 'astro:content';
 
 interface Props {
   title: string;
@@ -19,6 +20,16 @@ const {
 
 const settings = rawSettings;
 const testMode = import.meta.env.PUBLIC_TEST_MODE === 'true';
+
+// Build a minimal event list for the blocking season/live-detection script
+const _allEvents = await getCollection('events');
+const layoutEventList = _allEvents
+  .filter(e => !e.data.cancelled)
+  .map(e => ({
+    date: e.data.date.toISOString().slice(0, 10),
+    showSlug: e.data.showSlug ?? null,
+  }))
+  .sort((a, b) => a.date.localeCompare(b.date));
 ---
 <!doctype html>
 <html lang="en" data-season={settings.season}>
@@ -32,6 +43,29 @@ const testMode = import.meta.env.PUBLIC_TEST_MODE === 'true';
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Blocking script: sets data-season and data-show-live before first paint — no flash -->
+    <script is:inline define:vars={{ layoutEventList }}>
+    (function() {
+      var d = new Date();
+      var todayStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      var lookahead = new Date(d.getTime() + 10 * 864e5);
+      var lookaheadStr = lookahead.getFullYear() + '-' + String(lookahead.getMonth()+1).padStart(2,'0') + '-' + String(lookahead.getDate()).padStart(2,'0');
+      var SEASON = { 'scary-on-cherry': 'halloween', 'merry-on-cherry': 'christmas' };
+
+      var isLive = layoutEventList.some(function(e) { return e.date === todayStr; });
+      if (isLive) document.documentElement.dataset.showLive = 'true';
+
+      var seasonal = layoutEventList.find(function(e) {
+        return e.date === todayStr && e.showSlug && SEASON[e.showSlug];
+      });
+      if (!seasonal) {
+        seasonal = layoutEventList.filter(function(e) {
+          return e.date > todayStr && e.date <= lookaheadStr && e.showSlug && SEASON[e.showSlug];
+        }).sort(function(a, b) { return a.date.localeCompare(b.date); })[0];
+      }
+      if (seasonal) document.documentElement.dataset.season = SEASON[seasonal.showSlug];
+    })();
+    </script>
     <title>{title} | Draper Family Light Show</title>
     <meta name="description" content={description} />
     <meta property="og:title" content={`${title} | Draper Family Light Show`} />
@@ -53,11 +87,11 @@ const testMode = import.meta.env.PUBLIC_TEST_MODE === 'true';
     {settings.announcement && (
       <AnnouncementBanner message={settings.announcement} link={settings.announcementLink} />
     )}
-    <Nav season={settings.season} showActive={settings.showActive} />
+    <Nav />
     <main>
       <slot />
     </main>
-    <Footer season={settings.season} />
+    <Footer />
     <script>
       // Register service worker for PWA
       if ('serviceWorker' in navigator) {

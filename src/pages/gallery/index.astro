@@ -1,9 +1,14 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Icon from '../../components/Icon.astro';
+import VideoEmbed from '../../components/VideoEmbed.astro';
 import { getCollection } from 'astro:content';
 
 const albums = (await getCollection('albums')).sort((a, b) => b.data.year - a.data.year);
+
+const allVideos = await getCollection('videos');
+const ytVideos = allVideos.filter(v => v.data.platform === 'youtube');
+const ttVideos = allVideos.filter(v => v.data.platform === 'tiktok');
 
 const byShow: Record<string, typeof albums> = {};
 for (const album of albums) {
@@ -66,4 +71,48 @@ for (const album of albums) {
     )}
   </section>
 
+  <!-- Video Highlights -->
+  {allVideos.length > 0 && (
+    <section class="max-w-6xl mx-auto px-4 pb-16">
+      <p class="section-label text-center mb-2">Videos</p>
+      <h2 class="text-2xl font-bold text-center mb-8" style="color: var(--text)">Video Highlights</h2>
+      {ytVideos.length > 0 && (
+        <div class="video-grid-landscape mb-10">
+          {ytVideos.map(v => <VideoEmbed platform="youtube" url={v.data.url} title={v.data.videoTitle} />)}
+        </div>
+      )}
+      {ttVideos.length > 0 && (
+        <>
+          <p class="section-label text-center mb-4">TikTok</p>
+          <div class="video-grid-portrait">
+            {ttVideos.map(v => <VideoEmbed platform="tiktok" url={v.data.url} title={v.data.videoTitle} />)}
+          </div>
+        </>
+      )}
+    </section>
+  )}
+
 </Layout>
+
+<style>
+  .video-grid-landscape {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .video-grid-landscape { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .video-grid-landscape { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .video-grid-portrait {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 640px) {
+    .video-grid-portrait { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>

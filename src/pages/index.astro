@@ -1,28 +1,55 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import NowPlaying from '../components/NowPlaying.astro';
+import VideoEmbed from '../components/VideoEmbed.astro';
 import Icon from '../components/Icon.astro';
 import { getCollection } from 'astro:content';
 import rawSettings from '../content/settings/site.json';
 
 const shows = (await getCollection('shows')).sort((a, b) => a.data.order - b.data.order);
-
 const settings = rawSettings;
-
 const heroShow = shows.find((s) => s.data.featured) ?? shows[0];
+
+function parseStartHour(startTime?: string): number {
+  if (!startTime) return 20;
+  const m = startTime.match(/^(\d+)(?::(\d+))?\s*(AM|PM)$/i);
+  if (!m) return 20;
+  let h = parseInt(m[1]);
+  const pm = m[3].toUpperCase() === 'PM';
+  if (pm && h !== 12) h += 12;
+  if (!pm && h === 12) h = 0;
+  return h;
+}
+
+const allEvents = await getCollection('events');
+
+const allVideos = await getCollection('videos');
+const featuredVideos = allVideos
+  .filter(v => v.data.platform === 'youtube')
+  .slice(0, 3);
+const eventList = allEvents
+  .filter(e => !e.data.cancelled)
+  .map(e => ({
+    date: e.data.date.toISOString().slice(0, 10),
+    title: e.data.title,
+    showSlug: e.data.showSlug ?? null,
+    startHour: parseStartHour(e.data.startTime),
+  }))
+  .sort((a, b) => a.date.localeCompare(b.date));
 ---
 <Layout title="Home" description="Free holiday light and projection shows and the Scary On Cherry haunted house in Kenton, Ohio. 352 N Cherry St.">
 
   <!-- HERO -->
-  <section class="hero-section">
+  <section class="hero-section" class:list={[heroShow?.data.heroImage && 'has-bg']}>
+    {heroShow?.data.heroImage && (
+      <img src={heroShow.data.heroImage} alt="" class="hero-bg" aria-hidden="true" />
+    )}
     <div class="hero-inner">
       <div class="hero-content">
         <p class="section-label mb-3">352 N Cherry St · Kenton, Ohio</p>
-        <h1 class="hero-title">
-          {settings.showActive ? (
-            <>The Show is <span style="color: var(--accent)">On Tonight</span></>
-          ) : heroShow ? (
-            <>{heroShow?.data.title} is <span style="color: var(--accent)">Coming</span></>
+        <h1 id="hero-title" class="hero-title">
+          {heroShow ? (
+            <>{heroShow.data.title} is <span style="color: var(--accent)">Coming</span></>
           ) : (
             <>Draper Family <span style="color: var(--accent)">Light Show</span></>
           )}
@@ -43,9 +70,7 @@ const heroShow = shows.find((s) => s.data.featured) ?? shows[0];
   <section class="widget-section">
     <div class="max-w-4xl mx-auto px-4">
       <NowPlaying
-        showActive={settings.showActive}
-        nextEventName={settings.nextEventName}
-        nextEventDate={settings.nextEventDate}
+        eventList={eventList}
         nowPlayingImage={settings.nowPlayingImage}
         season={settings.season}
       />
@@ -84,6 +109,20 @@ const heroShow = shows.find((s) => s.data.featured) ?? shows[0];
       })}
     </div>
   </section>
+
+  <!-- VIDEO HIGHLIGHTS -->
+  {featuredVideos.length > 0 && (
+    <section class="max-w-6xl mx-auto px-4 py-16">
+      <p class="section-label text-center mb-2">Watch</p>
+      <h2 class="text-3xl font-bold text-center mb-10" style="color: var(--text)">Video Highlights</h2>
+      <div class="home-video-grid">
+        {featuredVideos.map(v => <VideoEmbed platform="youtube" url={v.data.url} title={v.data.videoTitle} />)}
+      </div>
+      <div class="text-center mt-8">
+        <a href="/gallery" class="btn-outline">See All Videos</a>
+      </div>
+    </section>
+  )}
 
   <!-- ABOUT BAND -->
   <section class="about-section">
@@ -131,13 +170,40 @@ const heroShow = shows.find((s) => s.data.featured) ?? shows[0];
 
 </Layout>
 
+<script is:inline define:vars={{ eventList }}>
+  const d = new Date();
+  const todayStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const isLive = eventList.some(e => e.date === todayStr);
+  if (isLive) {
+    const el = document.getElementById('hero-title');
+    if (el) el.innerHTML = 'The Show is <span style="color: var(--accent)">On Tonight</span>';
+  }
+</script>
+
 <style>
   .hero-section {
+    position: relative;
+    overflow: hidden;
     background: var(--hero-grad);
     border-bottom: 1px solid var(--border);
     padding: 5rem 1rem 4rem;
   }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.28;
+    z-index: 0;
+  }
+  .hero-section.has-bg {
+    background: var(--hero-grad);
+  }
   .hero-inner {
+    position: relative;
+    z-index: 1;
     max-width: 56rem;
     margin: 0 auto;
     text-align: center;
@@ -188,5 +254,17 @@ const heroShow = shows.find((s) => s.data.featured) ?? shows[0];
   .location-section {
     background-color: var(--surface);
     border-top: 1px solid var(--border);
+  }
+
+  .home-video-grid {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .home-video-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 1024px) {
+    .home-video-grid { grid-template-columns: repeat(3, 1fr); }
   }
 </style>

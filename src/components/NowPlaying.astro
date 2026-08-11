@@ -2,128 +2,118 @@
 import Icon from './Icon.astro';
 
 interface Props {
-  showActive: boolean;
-  nextEventName: string;
-  nextEventDate: string;
+  eventList: Array<{date: string, title: string, showSlug: string | null, startHour: number}>;
   nowPlayingImage: string;
   season: string;
 }
-const { showActive, nextEventName, nextEventDate, nowPlayingImage, season } = Astro.props;
+const { eventList, nowPlayingImage, season } = Astro.props;
 
 const seasonIcon = season === 'halloween' ? 'zap' : season === 'christmas' ? 'gift' : 'star';
-const returnDateFormatted = nextEventDate
-  ? new Date(nextEventDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  : '';
 ---
 
 <div class="now-playing-container">
-  {showActive ? (
-    <div class="live-wrapper">
-      <div class="live-header">
 
-        <div class="flex items-center gap-2">
-          <span class="live-dot"></span>
-          <span class="section-label">On Air Now</span>
-        </div>
-        <p class="text-xs mt-0.5" style="color: var(--text-subtle)">
-          Tune your car radio to <strong style="color: var(--accent)">106.9 FM</strong>
-        </p>
+  <!-- LIVE VIEW: hidden by default, JS reveals on show days -->
+  <div id="np-live" style="display:none" class="live-wrapper">
+    <div class="live-header">
+      <div class="flex items-center gap-2">
+        <span class="live-dot"></span>
+        <span class="section-label">On Air Now</span>
       </div>
+      <p class="text-xs mt-0.5" style="color: var(--text-subtle)">
+        Tune your car radio to <strong style="color: var(--accent)">106.9 FM</strong>
+      </p>
+    </div>
 
-      <div class="media-grid">
-        <div class="house-image-wrap">
-          {nowPlayingImage ? (
-            <img
-              src={nowPlayingImage}
-              alt="Draper Family Light Show house"
-              class="house-img"
-            />
-          ) : (
-            <div class="house-placeholder">
-              <Icon name={seasonIcon} size={40} />
-              <p class="text-xs mt-2 text-muted">Add a house photo in the admin</p>
-            </div>
-          )}
-          <div class="house-badge">
-            <span class="live-dot" style="width:6px;height:6px;"></span>
-            LIVE
+    <div class="media-grid">
+      <div class="house-image-wrap">
+        {nowPlayingImage ? (
+          <img
+            src={nowPlayingImage}
+            alt="Draper Family Light Show house"
+            class="house-img"
+          />
+        ) : (
+          <div class="house-placeholder">
+            <Icon name={seasonIcon} size={40} />
+            <p class="text-xs mt-2 text-muted">Add a house photo in the admin</p>
           </div>
-        </div>
-
-        <div class="rf-embed-wrap">
-          <p class="section-label mb-2">Now Playing</p>
-          <div class="rf-frame-container">
-            <iframe
-              src="https://draperlightshow.remotefalcon.com/remote-falcon"
-              title="Now Playing at Draper Family Light Show"
-              width="100%"
-              height="220"
-              style="border:none;overflow:hidden;"
-              allow="geolocation"
-              loading="lazy"
-              class="rf-iframe"
-            ></iframe>
-          </div>
+        )}
+        <div class="house-badge">
+          <span class="live-dot" style="width:6px;height:6px;"></span>
+          LIVE
         </div>
       </div>
 
-      <div class="audio-section">
-        <p class="section-label mb-3 flex items-center gap-1.5"><Icon name="music" size={14} />Listen Live Online</p>
-        <div class="pulsemesh-wrap">
+      <div class="rf-embed-wrap">
+        <p class="section-label mb-2">Now Playing</p>
+        <div class="rf-frame-container">
           <iframe
-            id="webplayer"
-            title="Draper Family Light Show Web Player"
+            src="https://draperlightshow.remotefalcon.com/remote-falcon"
+            title="Now Playing at Draper Family Light Show"
             width="100%"
             height="220"
             style="border:none;overflow:hidden;"
             allow="geolocation"
-            src="https://player.pulsemesh.io/d/VPQ8"
             loading="lazy"
+            class="rf-iframe"
           ></iframe>
         </div>
-        <p class="text-xs mt-2 text-center text-muted">Can't listen online? Tune to <strong style="color: var(--text)">106.9 FM</strong> at the show.</p>
       </div>
     </div>
-  ) : (
-    <div class="offseason-wrapper">
-      <div class="offseason-icon" aria-hidden="true">
-        <Icon name={seasonIcon} size={48} />
-      </div>
-      <p class="section-label mb-1">See You Soon</p>
-      <h2 class="offseason-title">
-        {nextEventName || 'The Show'} is Coming
-      </h2>
-      {returnDateFormatted && (
-        <p class="offseason-date">
-          Opens <strong style="color: var(--accent)">{returnDateFormatted}</strong>
-        </p>
-      )}
 
-      <div class="countdown-grid" id="countdown" aria-live="polite">
-        <div class="countdown-unit">
-          <span class="countdown-val" id="cd-days">--</span>
-          <span class="countdown-label">Days</span>
-        </div>
-        <div class="countdown-unit">
-          <span class="countdown-val" id="cd-hours">--</span>
-          <span class="countdown-label">Hours</span>
-        </div>
-        <div class="countdown-unit">
-          <span class="countdown-val" id="cd-mins">--</span>
-          <span class="countdown-label">Mins</span>
-        </div>
-        <div class="countdown-unit">
-          <span class="countdown-val" id="cd-secs">--</span>
-          <span class="countdown-label">Secs</span>
-        </div>
+    <div class="audio-section">
+      <p class="section-label mb-3 flex items-center gap-1.5"><Icon name="music" size={14} />Listen Live Online</p>
+      <div class="pulsemesh-wrap">
+        <iframe
+          id="webplayer"
+          title="Draper Family Light Show Web Player"
+          width="100%"
+          height="220"
+          style="border:none;overflow:hidden;"
+          allow="geolocation"
+          src="https://player.pulsemesh.io/d/VPQ8"
+          loading="lazy"
+        ></iframe>
       </div>
+      <p class="text-xs mt-2 text-center text-muted">Can't listen online? Tune to <strong style="color: var(--text)">106.9 FM</strong> at the show.</p>
+    </div>
+  </div>
 
-      <div class="offseason-actions">
-        <a href="/event-schedule" class="btn-accent">View All Events</a>
-        <a href="/gallery" class="btn-outline">Past Shows</a>
+  <!-- OFFSEASON VIEW: shown by default, JS fills in next event details -->
+  <div id="np-offseason" class="offseason-wrapper">
+    <div class="offseason-icon" aria-hidden="true">
+      <Icon name={seasonIcon} size={48} />
+    </div>
+    <p class="section-label mb-1">See You Soon</p>
+    <h2 id="np-next-title" class="offseason-title">The Show is Coming</h2>
+    <p id="np-next-date" class="offseason-date" style="display:none"></p>
+
+    <div class="countdown-grid" id="countdown" aria-live="polite">
+      <div class="countdown-unit">
+        <span class="countdown-val" id="cd-days">--</span>
+        <span class="countdown-label">Days</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-val" id="cd-hours">--</span>
+        <span class="countdown-label">Hours</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-val" id="cd-mins">--</span>
+        <span class="countdown-label">Mins</span>
+      </div>
+      <div class="countdown-unit">
+        <span class="countdown-val" id="cd-secs">--</span>
+        <span class="countdown-label">Secs</span>
       </div>
     </div>
-  )}
+
+    <div class="offseason-actions">
+      <a href="/event-schedule" class="btn-accent">View All Events</a>
+      <a href="/gallery" class="btn-outline">Past Shows</a>
+    </div>
+  </div>
+
 </div>
 
 <style>
@@ -310,33 +300,72 @@ const returnDateFormatted = nextEventDate
   }
 </style>
 
-<script define:vars={{ nextEventDate, showActive }}>
-  if (!showActive && nextEventDate) {
-    const target = new Date(nextEventDate + 'T20:00:00').getTime();
+<script is:inline define:vars={{ eventList }}>
+  function localDateStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
 
-    function updateCountdown() {
-      const now = Date.now();
-      const diff = target - now;
-      if (diff <= 0) {
-        document.getElementById('countdown')?.remove();
-        return;
+  const todayStr = localDateStr();
+  const isLive = eventList.some(function(e) { return e.date === todayStr; });
+
+  if (isLive) {
+    const liveEl = document.getElementById('np-live');
+    const offEl = document.getElementById('np-offseason');
+    if (liveEl) liveEl.style.display = '';
+    if (offEl) offEl.style.display = 'none';
+  } else {
+    const upcoming = eventList
+      .filter(function(e) { return e.date > todayStr; })
+      .sort(function(a, b) { return a.date.localeCompare(b.date); });
+
+    if (upcoming.length > 0) {
+      const next = upcoming[0];
+
+      const titleEl = document.getElementById('np-next-title');
+      if (titleEl) titleEl.textContent = next.title + ' is Coming';
+
+      const dateEl = document.getElementById('np-next-date');
+      if (dateEl) {
+        // Use noon local time to avoid timezone date shifting
+        const dateObj = new Date(next.date + 'T12:00:00');
+        dateEl.style.display = '';
+        dateEl.innerHTML = 'Opens <strong style="color: var(--accent)">' +
+          dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) +
+          '</strong>';
       }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
 
-      const set = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = String(val).padStart(2, '0');
-      };
-      set('cd-days', d);
-      set('cd-hours', h);
-      set('cd-mins', m);
-      set('cd-secs', s);
+      const startPad = String(next.startHour).padStart(2, '0');
+      const target = new Date(next.date + 'T' + startPad + ':00:00').getTime();
+
+      function updateCountdown() {
+        var diff = target - Date.now();
+        if (diff <= 0) {
+          var cdEl = document.getElementById('countdown');
+          if (cdEl) cdEl.remove();
+          return;
+        }
+        var days = Math.floor(diff / 86400000);
+        var hours = Math.floor((diff % 86400000) / 3600000);
+        var mins = Math.floor((diff % 3600000) / 60000);
+        var secs = Math.floor((diff % 60000) / 1000);
+
+        function set(id, val) {
+          var el = document.getElementById(id);
+          if (el) el.textContent = String(val).padStart(2, '0');
+        }
+        set('cd-days', days);
+        set('cd-hours', hours);
+        set('cd-mins', mins);
+        set('cd-secs', secs);
+      }
+
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    } else {
+      // No upcoming events scheduled — hide the countdown
+      var cdEl = document.getElementById('countdown');
+      if (cdEl) cdEl.remove();
     }
-
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
   }
 </script>

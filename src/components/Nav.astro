@@ -1,41 +1,38 @@
 ---
-interface Props {
-  season: string;
-  showActive: boolean;
-}
-const { season, showActive } = Astro.props;
 const currentPath = Astro.url.pathname;
-
-const seasonLabel = season === 'halloween' ? 'Scary on Cherry' : season === 'christmas' ? 'Merry on Cherry' : null;
 ---
 
-<!-- Tune-in banner -->
+<!-- Tune-in banner: both states rendered; CSS driven by data-show-live and data-season on <html> -->
 <div class="tune-bar">
   <div class="max-w-6xl mx-auto px-4 py-2 flex items-center justify-center gap-3 text-sm flex-wrap">
-    {showActive ? (
-      <span class="flex items-center gap-2">
-        <span class="live-dot"></span>
-        <strong class="text-accent">ON AIR NOW</strong>
-        <span class="text-muted">· Tune to</span>
-        <strong>106.9 FM</strong>
-        <span class="text-muted">or</span>
-        <a href="/listen-now" class="text-accent underline underline-offset-2 hover:opacity-80">listen online</a>
+
+    <!-- Live state: hidden by default, shown via CSS when html[data-show-live="true"] -->
+    <span class="tune-live items-center gap-2">
+      <span class="live-dot"></span>
+      <strong class="text-accent">ON AIR NOW</strong>
+      <span class="text-muted">· Tune to</span>
+      <strong>106.9 FM</strong>
+      <span class="text-muted">or</span>
+      <a href="/listen-now" class="text-accent underline underline-offset-2 hover:opacity-80">listen online</a>
+    </span>
+
+    <!-- Offseason state: shown by default, hidden when live -->
+    <span class="tune-offseason items-center gap-2 text-muted">
+      <!-- Season-specific labels, shown via CSS data-season selectors -->
+      <span class="tune-label-halloween items-center gap-1">
+        <span class="text-accent font-semibold">Scary on Cherry</span>
+        <span>· When the show runs, tune to</span>
       </span>
-    ) : (
-      <span class="flex items-center gap-2 text-muted">
-        {seasonLabel ? (
-          <>
-            <span class="text-accent font-semibold">{seasonLabel}</span>
-            <span>· When the show runs, tune to</span>
-          </>
-        ) : (
-          <span>During our shows, tune to</span>
-        )}
-        <strong class="text-[var(--text)]">106.9 FM</strong>
-        <span>or</span>
-        <a href="/listen-now" class="underline underline-offset-2 hover:text-accent transition-colors">listen online</a>
+      <span class="tune-label-christmas items-center gap-1">
+        <span class="text-accent font-semibold">Merry on Cherry</span>
+        <span>· When the show runs, tune to</span>
       </span>
-    )}
+      <span class="tune-label-default">During our shows, tune to</span>
+      <strong class="text-(--text)">106.9 FM</strong>
+      <span>or</span>
+      <a href="/listen-now" class="underline underline-offset-2 hover:text-accent transition-colors">listen online</a>
+    </span>
+
   </div>
 </div>
 
@@ -120,6 +117,25 @@ const seasonLabel = season === 'halloween' ? 'Scary on Cherry' : season === 'chr
     color: var(--text);
   }
 
+  /* Both tune states: default display controlled here */
+  .tune-live { display: none; }
+  .tune-offseason { display: flex; }
+
+  /* Season labels: default all hidden except the generic one */
+  .tune-label-halloween { display: none; }
+  .tune-label-christmas { display: none; }
+  .tune-label-default { display: inline; }
+
+  /* Live override */
+  html[data-show-live="true"] .tune-live { display: flex; }
+  html[data-show-live="true"] .tune-offseason { display: none; }
+
+  /* Season overrides for the offseason label */
+  html[data-season="halloween"] .tune-label-halloween { display: inline-flex; }
+  html[data-season="halloween"] .tune-label-default { display: none; }
+  html[data-season="christmas"] .tune-label-christmas { display: inline-flex; }
+  html[data-season="christmas"] .tune-label-default { display: none; }
+
   .nav-bar {
     background-color: color-mix(in srgb, var(--bg) 90%, transparent);
     backdrop-filter: blur(12px);
@@ -161,6 +177,14 @@ const seasonLabel = season === 'halloween' ? 'Scary on Cherry' : season === 'chr
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     display: none;
     z-index: 100;
+  }
+  .dropdown::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0;
+    right: 0;
+    height: 8px;
   }
   .group:hover .dropdown,
   .group:focus-within .dropdown {

@@ -41,11 +41,16 @@ const albums = defineCollection({
   }),
 });
 
+const dateString = z.preprocess(
+  val => val instanceof Date ? val.toISOString().slice(0, 10) : val,
+  z.string()
+);
+
 const partnerEvents = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/partner-events' }),
   schema: z.object({
     title: z.string(),
-    date: z.string(),
+    date: dateString,
     startTime: z.string().optional(),
     endTime: z.string().optional(),
     location: z.string().optional(),
@@ -60,4 +65,25 @@ const partnerEvents = defineCollection({
   }),
 });
 
-export const collections = { shows, events, albums, partnerEvents };
+const videos = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/videos' }),
+  schema: z.object({
+    videoTitle: z.string(),
+    showSlug: z.string(),
+    platform: z.enum(['youtube', 'tiktok']),
+    url: z.string(),
+  }),
+});
+
+const press = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/press' }),
+  schema: z.object({
+    headline: z.string(),
+    showSlug: z.string(),
+    publication: z.string(),
+    url: z.string(),
+    date: z.string().optional(),
+  }),
+});
+
+export const collections = { shows, events, albums, partnerEvents, videos, press };

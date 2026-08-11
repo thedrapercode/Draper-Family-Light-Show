@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Icon from '../../components/Icon.astro';
+import VideoEmbed from '../../components/VideoEmbed.astro';
 import { getCollection, render } from 'astro:content';
 import ticketingSettings from '../../content/ticketing/settings.json';
 
@@ -16,6 +17,14 @@ const { show } = Astro.props;
 const { Content } = await render(show);
 
 const title = show.data.title;
+
+const allVideos = await getCollection('videos');
+const showVideos = allVideos.filter(v => v.data.showSlug === show.id);
+const ytVideos = showVideos.filter(v => v.data.platform === 'youtube');
+const ttVideos = showVideos.filter(v => v.data.platform === 'tiktok');
+
+const allPress = await getCollection('press');
+const showPress = allPress.filter(p => p.data.showSlug === show.id);
 ---
 <Layout title={title} description={show.data.tagline}>
 
@@ -69,6 +78,55 @@ const title = show.data.title;
       <a href="/tickets/scary-on-cherry" class="btn-accent block text-center text-base py-4" style="font-size:1.0625rem">
         Reserve Free Tickets
       </a>
+    </section>
+  )}
+
+  <!-- Videos -->
+  {showVideos.length > 0 && (
+    <section class="max-w-5xl mx-auto px-4 pb-10">
+      <p class="section-label mb-2">Watch</p>
+      <h2 class="text-2xl font-bold mb-8" style="color: var(--text)">Video Highlights</h2>
+      {ytVideos.length > 0 && (
+        <div class="video-grid-landscape mb-8">
+          {ytVideos.map(v => <VideoEmbed platform="youtube" url={v.data.url} title={v.data.videoTitle} />)}
+        </div>
+      )}
+      {ttVideos.length > 0 && (
+        <>
+          <p class="section-label mb-4">TikTok</p>
+          <div class="video-grid-portrait">
+            {ttVideos.map(v => <VideoEmbed platform="tiktok" url={v.data.url} title={v.data.videoTitle} />)}
+          </div>
+        </>
+      )}
+    </section>
+  )}
+
+  <!-- Press & News -->
+  {showPress.length > 0 && (
+    <section class="max-w-3xl mx-auto px-4 pb-10">
+      <p class="section-label mb-2">Coverage</p>
+      <h2 class="text-2xl font-bold mb-6" style="color: var(--text)">In the News</h2>
+      <ul class="space-y-3">
+        {showPress.map(link => (
+          <li>
+            <a
+              href={link.data.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="press-card"
+            >
+              <div>
+                <p class="font-semibold text-sm" style="color: var(--text)">{link.data.headline}</p>
+                <p class="text-xs mt-0.5" style="color: var(--text-subtle)">
+                  {link.data.publication}{link.data.date && <> · {link.data.date}</>}
+                </p>
+              </div>
+              <span class="press-arrow" aria-hidden="true">→</span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </section>
   )}
 
@@ -160,5 +218,43 @@ const title = show.data.title;
     border-radius: 0.75rem;
     padding: 1.5rem;
     margin-top: 2rem;
+  }
+
+  .video-grid-landscape {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) {
+    .video-grid-landscape { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .video-grid-portrait {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 640px) {
+    .video-grid-portrait { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .press-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    text-decoration: none;
+    transition: border-color 150ms;
+  }
+  .press-card:hover { border-color: var(--accent); }
+
+  .press-arrow {
+    font-size: 1.125rem;
+    color: var(--accent);
+    flex-shrink: 0;
   }
 </style>

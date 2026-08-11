@@ -7,7 +7,8 @@
     "dev:cf": "astro dev --port 4321",
     "build": "astro build",
     "preview": "astro preview",
-    "serve": "npx serve dist"
+    "serve": "npx serve dist",
+    "publish": "git pull origin main && astro build && wrangler deploy"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",

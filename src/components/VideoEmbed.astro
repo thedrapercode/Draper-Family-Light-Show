@@ -1,0 +1,83 @@
+---
+interface Props {
+  platform: 'youtube' | 'tiktok';
+  url: string;
+  title: string;
+}
+
+const { platform, url, title } = Astro.props;
+
+function getYouTubeId(u: string): string | null {
+  const m = u.match(/(?:[?&]v=|youtu\.be\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function getTikTokId(u: string): string | null {
+  const m = u.match(/\/video\/(\d+)/);
+  return m ? m[1] : null;
+}
+
+const ytId = platform === 'youtube' ? getYouTubeId(url) : null;
+const ttId = platform === 'tiktok' ? getTikTokId(url) : null;
+const embedSrc = ytId
+  ? `https://www.youtube.com/embed/${ytId}?rel=0`
+  : ttId
+  ? `https://www.tiktok.com/embed/v2/${ttId}`
+  : null;
+const isPortrait = platform === 'tiktok';
+---
+
+{embedSrc && (
+  <div class:list={['video-card', isPortrait ? 'video-portrait' : 'video-landscape']}>
+    <div class="video-ratio">
+      <iframe
+        src={embedSrc}
+        title={title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        allowfullscreen
+        loading="lazy"
+        class="video-frame"
+      ></iframe>
+    </div>
+    <p class="video-title">{title}</p>
+  </div>
+)}
+
+<style>
+  .video-card {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .video-ratio {
+    position: relative;
+  }
+
+  .video-landscape .video-ratio {
+    padding-top: 56.25%; /* 16:9 */
+  }
+
+  .video-portrait .video-ratio {
+    padding-top: 177.78%; /* 9:16 */
+  }
+
+  .video-frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  .video-title {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+</style>

@@ -1,9 +1,4 @@
 ---
-interface Props {
-  season: string;
-}
-const { season } = Astro.props;
-
 const socials = [
   { name: 'Facebook', url: 'https://www.facebook.com/draperfamilylightshow/', icon: 'fb' },
   { name: 'Instagram', url: 'https://www.instagram.com/draperfamilylightshow/', icon: 'ig' },
@@ -52,7 +47,7 @@ const socials = [
     </div>
   </div>
   <div class="border-t text-center text-xs py-4 px-4" style="border-color: var(--border); color: var(--text-subtle)">
-    &copy; {new Date().getFullYear()} Draper Family Light Show &mdash; Kenton, Ohio &mdash; All Rights Reserved
+    &copy; {new Date().getFullYear()} Draper Family Light Show - Kenton, Ohio - All Rights Reserved
   </div>
 </footer>
 
