@@ -1,0 +1,292 @@
+---
+// Persistent radio player — survives page navigation via transition:persist.
+// The PulseMesh iframe is lazy-loaded on first open and never unloads after that.
+---
+
+<div id="radio-player" transition:persist>
+
+  <!-- Slide-up panel (hidden until user opens it) -->
+  <div class="rp-panel" id="rp-panel" aria-hidden="true">
+    <div class="rp-panel-head">
+      <div class="rp-panel-meta">
+        <span class="rp-pfreq">106.9 FM</span>
+        <span class="rp-pdot" aria-hidden="true"></span>
+        <span class="rp-pname">Draper Family Light Show</span>
+        <span class="rp-pcity">Kenton, Ohio</span>
+      </div>
+      <button class="rp-closebtn" id="rp-close" aria-label="Close player">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <iframe
+      id="rp-iframe"
+      title="Draper Family Light Show — 106.9 FM"
+      width="100%"
+      height="220"
+      style="border:none;display:block"
+      allow="geolocation"
+    ></iframe>
+  </div>
+
+  <!-- Always-visible tab -->
+  <button class="rp-tab" id="rp-tab" aria-label="Open radio player" aria-expanded="false">
+
+    <div class="rp-eq" aria-hidden="true">
+      <b></b><b></b><b></b><b></b><b></b>
+    </div>
+
+    <div class="rp-tabinfo">
+      <span class="rp-tabfreq">106.9 FM</span>
+      <span class="rp-tabname">Draper Light Show</span>
+    </div>
+
+    <span class="rp-livebadge" id="rp-live" aria-label="Live now">ON AIR</span>
+
+    <span class="rp-clock" id="rp-clock" aria-live="off"></span>
+
+    <svg class="rp-chevron" id="rp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+
+  </button>
+</div>
+
+<script>
+(function () {
+  var STREAM = 'https://player.pulsemesh.io/d/VPQ8';
+  var loaded = false;
+  var isOpen = false;
+
+  function $ (id) { return document.getElementById(id); }
+
+  function setOpen(val) {
+    isOpen = val;
+    var panel  = $('rp-panel');
+    var tab    = $('rp-tab');
+    var chev   = $('rp-chevron');
+    if (panel)  panel.classList.toggle('open', val);
+    if (panel)  panel.setAttribute('aria-hidden', String(!val));
+    if (tab)    tab.setAttribute('aria-expanded', String(val));
+    if (chev)   chev.classList.toggle('up', val);
+    // Lazy-load the iframe on first open so it doesn't consume bandwidth until requested
+    if (val && !loaded) {
+      var f = $('rp-iframe');
+      if (f) { f.src = STREAM; loaded = true; }
+    }
+  }
+
+  function updateClock() {
+    var el = $('rp-clock');
+    if (!el) return;
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    el.textContent = (h % 12 || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'PM' : 'AM');
+  }
+
+  function updateLive() {
+    var badge = $('rp-live');
+    if (!badge) return;
+    var live = document.documentElement.dataset.showLive === 'true';
+    badge.style.display = live ? 'inline-flex' : 'none';
+  }
+
+  // Button wiring — only needed once; the element persists across navigations
+  var tab = $('rp-tab');
+  var closeBtn = $('rp-close');
+  if (tab)      tab.addEventListener('click', function () { setOpen(!isOpen); });
+  if (closeBtn) closeBtn.addEventListener('click', function (e) { e.stopPropagation(); setOpen(false); });
+
+  // Expose so listen-now page can trigger open programmatically
+  window.__radioOpen  = function () { setOpen(true); };
+  window.__radioClose = function () { setOpen(false); };
+
+  // Per-navigation updates: refresh live badge and clock
+  document.addEventListener('astro:page-load', function () {
+    updateClock();
+    updateLive();
+  });
+
+  // Initial clock — don't wait for astro:page-load for the very first render
+  updateClock();
+  setInterval(updateClock, 60000);
+})();
+</script>
+
+<style>
+  /* ── Wrapper ───────────────────────────────────────────────────────────── */
+  #radio-player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9000;
+    font-family: Inter, system-ui, sans-serif;
+    /* Hidden by default — only visible on show nights */
+    display: none;
+  }
+  /* The Layout's blocking head script sets data-show-live="true" on show nights */
+  :global(html[data-show-live="true"]) #radio-player {
+    display: block;
+  }
+  /* Push page content up on show nights so it isn't hidden behind the bar */
+  :global(html[data-show-live="true"] body) {
+    padding-bottom: 47px;
+  }
+
+  /* ── Slide-up panel ────────────────────────────────────────────────────── */
+  .rp-panel {
+    background: #0d0d1a;
+    border-top: 1px solid #2a2a3a;
+    transform: translateY(100%);
+    transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+  }
+  .rp-panel.open { transform: translateY(0); }
+
+  .rp-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid #2a2a3a;
+    gap: 1rem;
+  }
+  .rp-panel-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .rp-pfreq  { font-weight: 800; font-size: 0.875rem; color: #e8613a; white-space: nowrap; }
+  .rp-pdot   { width: 4px; height: 4px; border-radius: 50%; background: #3a3a4a; flex-shrink: 0; }
+  .rp-pname  { font-size: 0.8125rem; font-weight: 600; color: #e8e8f0; white-space: nowrap; }
+  .rp-pcity  { font-size: 0.75rem; color: #555; }
+
+  .rp-closebtn {
+    color: #666;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 150ms;
+    flex-shrink: 0;
+  }
+  .rp-closebtn:hover { color: #e8e8f0; }
+
+  /* ── Tab ───────────────────────────────────────────────────────────────── */
+  .rp-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    background: #08080f;
+    border: none;
+    border-top: 1px solid #2a2a3a;
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+    color: #e8e8f0;
+    min-height: 46px;
+    transition: background 150ms;
+    text-align: left;
+  }
+  .rp-tab:hover { background: #0f0f1c; }
+
+  /* ── Equalizer bars ────────────────────────────────────────────────────── */
+  .rp-eq {
+    display: flex;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .rp-eq b {
+    display: block;
+    width: 3px;
+    border-radius: 2px 2px 0 0;
+    background: #e8613a;
+  }
+  .rp-eq b:nth-child(1) { animation: rpeq 0.88s ease-in-out infinite; }
+  .rp-eq b:nth-child(2) { animation: rpeq 0.63s ease-in-out infinite 0.23s; }
+  .rp-eq b:nth-child(3) { animation: rpeq 1.07s ease-in-out infinite 0.07s; }
+  .rp-eq b:nth-child(4) { animation: rpeq 0.77s ease-in-out infinite 0.39s; }
+  .rp-eq b:nth-child(5) { animation: rpeq 0.55s ease-in-out infinite 0.16s; }
+
+  @keyframes rpeq {
+    0%, 100% { height: 3px; }
+    50%       { height: 18px; }
+  }
+
+  /* ── Tab text ──────────────────────────────────────────────────────────── */
+  .rp-tabinfo {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+  .rp-tabfreq {
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: #e8613a;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .rp-tabname {
+    font-size: 0.75rem;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── ON AIR badge (only visible on show nights) ────────────────────────── */
+  .rp-livebadge {
+    display: none; /* JS shows when data-show-live=true */
+    align-items: center;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #fff;
+    background: #e8613a;
+    border-radius: 9999px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+    animation: rp-pulse 2s ease-in-out infinite;
+  }
+  @keyframes rp-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.65; }
+  }
+
+  /* ── Clock ─────────────────────────────────────────────────────────────── */
+  .rp-clock {
+    font-size: 0.75rem;
+    color: #444;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Chevron ───────────────────────────────────────────────────────────── */
+  .rp-chevron {
+    color: #444;
+    flex-shrink: 0;
+    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .rp-chevron.up { transform: rotate(180deg); }
+
+  /* ── Responsive ────────────────────────────────────────────────────────── */
+  @media (max-width: 380px) {
+    .rp-tabname { display: none; }
+    .rp-clock   { display: none; }
+    .rp-tab     { gap: 0.5rem; padding: 0.5rem 0.875rem; }
+  }
+</style>

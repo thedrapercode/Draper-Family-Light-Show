@@ -2,6 +2,8 @@
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import AnnouncementBanner from '../components/AnnouncementBanner.astro';
+import RadioPlayer from '../components/RadioPlayer.astro';
+import { ViewTransitions } from 'astro:transitions';
 import '../styles/global.css';
 import rawSettings from '../content/settings/site.json';
 import { getCollection } from 'astro:content';
@@ -77,6 +79,7 @@ const layoutEventList = _allEvents
     <meta name="twitter:title" content={`${title} | Draper Family Light Show`} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
+    <ViewTransitions />
   </head>
   <body>
     {testMode && (
@@ -92,6 +95,7 @@ const layoutEventList = _allEvents
       <slot />
     </main>
     <Footer />
+    <RadioPlayer />
     <script>
       // Register service worker for PWA
       if ('serviceWorker' in navigator) {
