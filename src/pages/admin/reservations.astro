@@ -1,0 +1,389 @@
+---
+export const prerender = false;
+
+// Protected by KEYSTATIC_SECRET Worker secret — access via /admin/reservations?key=YOUR_SECRET
+const provided = new URL(Astro.request.url).searchParams.get('key');
+
+interface Reservation {
+  id: string;
+  date: string;
+  slot_time: string;
+  name: string;
+  email: string;
+  guests: number;
+  donation_cents: number;
+  square_payment_id: string | null;
+  confirmation_code: string;
+  created_at: string;
+}
+
+let reservations: Reservation[] = [];
+let dbError = '';
+
+// In dev, fall back to .env file. In prod, read from Cloudflare Workers env.
+let adminKey: string | undefined = import.meta.env.KEYSTATIC_SECRET;
+
+try {
+  if (!import.meta.env.DEV) {
+    const { env } = await import('cloudflare:workers');
+    adminKey = (env as any).KEYSTATIC_SECRET as string | undefined;
+    const db = (env as any).DB as D1Database;
+    if (db) {
+      const result = await db
+        .prepare('SELECT * FROM reservations ORDER BY date ASC, slot_time ASC, created_at ASC')
+        .all<Reservation>();
+      reservations = result.results;
+    }
+  }
+} catch (e) {
+  dbError = String(e);
+}
+
+if (!adminKey || provided !== adminKey) {
+  return new Response('Unauthorized. Provide ?key= matching your KEYSTATIC_SECRET.', { status: 403 });
+}
+
+// Group by date
+const byDate = new Map<string, Reservation[]>();
+for (const r of reservations) {
+  if (!byDate.has(r.date)) byDate.set(r.date, []);
+  byDate.get(r.date)!.push(r);
+}
+
+const dates = [...byDate.keys()].sort();
+
+const totalReservations = reservations.length;
+const totalGuests = reservations.reduce((s, r) => s + r.guests, 0);
+const totalDonationCents = reservations.reduce((s, r) => s + r.donation_cents, 0);
+
+function fmtDate(d: string) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+  });
+}
+
+function fmtTime(t: string) {
+  const [h, m] = t.split(':').map(Number);
+  const hr = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return `${hr}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
+function fmtCreated(iso: string) {
+  return new Date(iso).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
+}
+---
+
+<!doctype html>
+<html lang="en" style="background:#0a0a12;color:#e8e8f0;font-family:Inter,system-ui,sans-serif">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reservations — Draper Light Show Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0 0 4rem; }
+
+    .topbar {
+      background: #111118;
+      border-bottom: 1px solid #2a2a3a;
+      padding: 0.875rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .topbar-title { font-weight: 700; font-size: 1rem; color: #e8e8f0; }
+    .topbar-sub { font-size: 0.75rem; color: #888; margin-top: 0.125rem; }
+
+    .stats-bar {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      flex-wrap: wrap;
+    }
+    .stat {
+      background: #111118;
+      border: 1px solid #2a2a3a;
+      border-radius: 0.75rem;
+      padding: 0.875rem 1.25rem;
+      min-width: 140px;
+    }
+    .stat-val { font-size: 1.5rem; font-weight: 800; color: #e8613a; }
+    .stat-label { font-size: 0.75rem; color: #888; margin-top: 0.125rem; }
+
+    .date-tabs {
+      display: flex;
+      gap: 0.375rem;
+      padding: 0 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .tab {
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      border: 1.5px solid #2a2a3a;
+      background: transparent;
+      color: #aaa;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 150ms, background 150ms, color 150ms;
+    }
+    .tab:hover { border-color: #e8613a; color: #e8e8f0; }
+    .tab.active { border-color: #e8613a; background: rgba(232,97,58,0.12); color: #e8613a; }
+
+    .section { padding: 0 1.5rem; display: none; }
+    .section.visible { display: block; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .section-title { font-size: 1rem; font-weight: 700; color: #e8e8f0; }
+    .section-meta { font-size: 0.8rem; color: #888; }
+
+    .tbl-wrap { overflow-x: auto; border-radius: 0.75rem; border: 1px solid #2a2a3a; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+    }
+    th {
+      background: #111118;
+      color: #888;
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.625rem 0.875rem;
+      text-align: left;
+      border-bottom: 1px solid #2a2a3a;
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.625rem 0.875rem;
+      border-bottom: 1px solid #1a1a28;
+      color: #ccc;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #111118; }
+
+    .code { font-family: monospace; color: #e8613a; font-weight: 700; font-size: 0.875rem; }
+    .badge-donation {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      background: rgba(232,97,58,0.15);
+      border: 1px solid rgba(232,97,58,0.4);
+      border-radius: 9999px;
+      color: #e8613a;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .badge-none {
+      color: #555;
+      font-size: 0.7rem;
+    }
+
+    .csv-btn {
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.5rem;
+      border: 1.5px solid #2a2a3a;
+      background: transparent;
+      color: #aaa;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 150ms, color 150ms;
+    }
+    .csv-btn:hover { border-color: #e8613a; color: #e8613a; }
+
+    .empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #555;
+      font-size: 0.875rem;
+    }
+    .err { color: #f87171; padding: 1rem 1.5rem; font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Reservations Dashboard</div>
+      <div class="topbar-sub">Draper Family Light Show · Scary on Cherry 2026</div>
+    </div>
+    <button class="csv-btn" id="export-all">Export all as CSV</button>
+  </div>
+
+  {dbError && <p class="err">DB error: {dbError}</p>}
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val">{totalReservations}</div>
+      <div class="stat-label">Reservations</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{totalGuests}</div>
+      <div class="stat-label">Total Guests</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">${(totalDonationCents / 100).toFixed(2)}</div>
+      <div class="stat-label">Donations Collected</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{dates.length}</div>
+      <div class="stat-label">Show Nights</div>
+    </div>
+  </div>
+
+  {reservations.length === 0 && !dbError && (
+    <div class="empty">No reservations yet.</div>
+  )}
+
+  {reservations.length > 0 && (
+    <>
+      <div class="date-tabs" id="tabs">
+        <button class="tab active" data-date="all">All Dates</button>
+        {dates.map(d => (
+          <button class="tab" data-date={d}>{fmtDate(d)}</button>
+        ))}
+      </div>
+
+      <!-- All dates section -->
+      <div class="section visible" id="sec-all">
+        <div class="section-header">
+          <div>
+            <span class="section-title">All Reservations</span>
+            <span class="section-meta"> · {totalReservations} bookings · {totalGuests} guests</span>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table id="tbl-all">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Guests</th>
+                <th>Donation</th>
+                <th>Booked</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reservations.map(r => (
+                <tr>
+                  <td><span class="code">{r.confirmation_code}</span></td>
+                  <td>{fmtDate(r.date)}</td>
+                  <td>{fmtTime(r.slot_time)}</td>
+                  <td>{r.name}</td>
+                  <td>{r.email}</td>
+                  <td style="text-align:center">{r.guests}</td>
+                  <td>
+                    {r.donation_cents > 0
+                      ? <span class="badge-donation">${(r.donation_cents / 100).toFixed(0)}</span>
+                      : <span class="badge-none">—</span>
+                    }
+                  </td>
+                  <td style="color:#555">{fmtCreated(r.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Per-date sections -->
+      {dates.map(d => {
+        const rows = byDate.get(d) ?? [];
+        const dateGuests = rows.reduce((s, r) => s + r.guests, 0);
+        const dateDonation = rows.reduce((s, r) => s + r.donation_cents, 0);
+        return (
+          <div class="section" id={`sec-${d}`}>
+            <div class="section-header">
+              <div>
+                <span class="section-title">{fmtDate(d)}</span>
+                <span class="section-meta"> · {rows.length} bookings · {dateGuests} guests · ${(dateDonation / 100).toFixed(2)} donated</span>
+              </div>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Time</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Guests</th>
+                    <th>Donation</th>
+                    <th>Booked</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => (
+                    <tr>
+                      <td><span class="code">{r.confirmation_code}</span></td>
+                      <td>{fmtTime(r.slot_time)}</td>
+                      <td>{r.name}</td>
+                      <td>{r.email}</td>
+                      <td style="text-align:center">{r.guests}</td>
+                      <td>
+                        {r.donation_cents > 0
+                          ? <span class="badge-donation">${(r.donation_cents / 100).toFixed(0)}</span>
+                          : <span class="badge-none">—</span>
+                        }
+                      </td>
+                      <td style="color:#555">{fmtCreated(r.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  )}
+
+</body>
+</html>
+
+<script>
+  // Date tab switching
+  document.querySelectorAll<HTMLButtonElement>('#tabs .tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#tabs .tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const date = btn.dataset.date!;
+      document.querySelectorAll<HTMLElement>('.section').forEach(s => s.classList.remove('visible'));
+      document.getElementById(`sec-${date}`)?.classList.add('visible');
+    });
+  });
+
+  // Export all as CSV
+  document.getElementById('export-all')?.addEventListener('click', () => {
+    const tbl = document.getElementById('tbl-all');
+    if (!tbl) return;
+    const rows: string[][] = [];
+    tbl.querySelectorAll('tr').forEach(tr => {
+      const cells = [...tr.querySelectorAll('th,td')].map(c => `"${c.textContent?.trim().replace(/"/g, '""') ?? ''}"`);
+      rows.push(cells);
+    });
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'reservations.csv';
+    a.click();
+  });
+</script>
